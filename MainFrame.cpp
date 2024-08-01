@@ -8,6 +8,7 @@
 
 
 
+//- IZRACUN
 std::vector<double> izracun(int n) {
 	std::vector<double> res;
 
@@ -18,77 +19,68 @@ std::vector<double> izracun(int n) {
 
 
 
-int x = 300;
-int y = 250;
-int dx = x;
-int dy = y;
-int velikost_x = 120;
-int velikost_y = 60;
-
-wxPanel* panel;
-wxSlider* slider;
-
-std::vector<std::vector<int>> seznam_valjev;
-
-MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) {
-
-	panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 
 
-	slider = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxPoint(200, 0), wxSize(600, -1));
+wxSlider* slider; // Ustvarimo spremenljivko za slider
+
+MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) { // Ustvarimo okno
+
+	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS); // Ustvarimo panel (ozadje na oknu)
 
 
-	panel->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseEvent, this);
-	slider->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this);
+	slider = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxPoint(200, 0), wxSize(600, -1)); // Definiramo slider
 
-	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(MainFrame::OnPaint));
-	panel->SetDoubleBuffered(true);
 
-	wxStatusBar* statusBar = CreateStatusBar();
+	panel->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseEvent, this); // Zazna levi klik na miski
+	slider->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this); // Zazna spemembo na slider-ju
+
+	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(MainFrame::OnPaint)); // Uvozimo risanje na framu
+	panel->SetDoubleBuffered(true); // Da prikaz na framu ne utripa
+
+	wxStatusBar* statusBar = CreateStatusBar(); // Ustvarimo status bar
 	statusBar->SetDoubleBuffered(true);
 }
 
 
 
-void MainFrame::OnMouseEvent(wxMouseEvent& evt) {
+void MainFrame::OnMouseEvent(wxMouseEvent& evt) { // Funkcija ob zaznani spremembi na miski
 
-	wxPoint mousePos = wxGetMousePosition();
-	mousePos = this->ScreenToClient(mousePos);
+	wxPoint mousePos = wxGetMousePosition(); // Najdemo pozicijo miske
+	mousePos = this->ScreenToClient(mousePos); // Spremenimo pozicijo miske na relativni na okno
 
-	dx = round(static_cast<float>(mousePos.x) / 20) * 20;
-	dy = round(static_cast<float>(mousePos.y) / 20) * 20;
 
-	wxString message = wxString::Format("Mouse Event Detected! (x=%d y=%d)", dx, dy);
-	wxLogStatus(message);
+
+	wxString message = wxString::Format("Mouse Event Detected! (x=%d y=%d)", mousePos.x, mousePos.y); // Ustvarimo sporocilo
+	wxLogStatus(message); // Izpise sporocilo v status bar
 }
 
 
 
-void MainFrame::OnSliderChanged(wxCommandEvent& evt) {
+void MainFrame::OnSliderChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na slider-ju
 
 	wxLogStatus("Slider change event");
 
-	Refresh();
+	Refresh(); // 'Refresh()' pozene 'MainFrame::OnPaint(wxPaintEvent& event)'
 }
 
-void MainFrame::OnPaint(wxPaintEvent& event) {
+void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 
-	wxPaintDC dc(this);
+	wxPaintDC dc(this); // spremenljivka za risanje
 
 
 	int x_okno = 150;
 	int y_okno = 30;
-	wxSize size = this->GetSize();
+	wxSize size = this->GetSize(); // Velikost okna
 	int sirina_panel = size.x;
 	int visina_panel = size.y;
 	int sirina = sirina_panel - 2 * x_okno;
 	int visina = visina_panel - y_okno;
 
-	int rot = slider->GetValue();
+	int rot = slider->GetValue(); // Dobimo vrednost na sliderju
 
 
-	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID));
-	dc.DrawRectangle(x_okno, y_okno, sirina, visina);
+	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID)); // Definiramo crto
+	dc.DrawRectangle(x_okno, y_okno, sirina, visina); // Izrisemo kvadrat
 
 
 	if (true) { // Admin Logs
@@ -97,16 +89,17 @@ void MainFrame::OnPaint(wxPaintEvent& event) {
 	}
 
 
-	dc.SetPen(wxPen(wxColor(0,0,0), 3, wxPENSTYLE_SOLID));
+	dc.SetPen(wxPen(wxColor(0,0,0), 3, wxPENSTYLE_SOLID)); // Definiramo debelo crto
 
-	int stZob = 11;
+	int stZob = 11; // Stevilo zob na zobiku
 	sirina -= 160;
 
-	for (int j = 0; j < 2; j++) {
+	for (int j = 0; j < 2; j++) { // Izrisemo 2 zobnika
 
-		if (j == 1) sirina += 320;
-		int smer = 1;
-		if (j == 1) smer = -1;
+		if (j % 2 != 0) sirina += 320; // Spremenimo pozicijo zobnika
+
+		int smer = 1; // Smer vrtenja
+		if (j % 2 != 0) smer = -1; // Smer vrtenja
 
 		wxPointList* seznamTock = new wxPointList();
 		wxPoint* tocka0 = new wxPoint();
@@ -117,17 +110,17 @@ void MainFrame::OnPaint(wxPaintEvent& event) {
 			if (i % 2 == 0) dol /= 3;
 
 			wxPoint* tocka;
-			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol);
+			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol); // Dolocimo tocke zobnikov
 			seznamTock->Append(tocka);
 
 			if (i == 0) tocka0 = tocka;
 			if (i == stZob * 2 - 1) seznamTock->Append(tocka0);
 		}
 
-		dc.DrawSpline(seznamTock);
+		dc.DrawSpline(seznamTock); // Povezemo tocke zobnikov
 	}
 
-	dc.SetPen(wxPen(wxColor(0, 0, 0), 1, wxPENSTYLE_SOLID));
+	dc.SetPen(wxPen(wxColor(0, 0, 0), 1, wxPENSTYLE_SOLID)); // Definiramo navadno crto
 }
 
 
