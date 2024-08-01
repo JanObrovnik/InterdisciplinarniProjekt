@@ -5,7 +5,6 @@
 #include <time.h>
 #include <vector>
 #include <math.h>
-//#include <algorithm>
 
 
 
@@ -27,8 +26,6 @@ int velikost_x = 120;
 int velikost_y = 60;
 
 wxPanel* panel;
-wxChoice* choice_dod;
-wxChoice* choice_izb;
 wxSlider* slider;
 
 std::vector<std::vector<int>> seznam_valjev;
@@ -37,31 +34,15 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 	panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 
-	wxButton* button_dod = new wxButton(panel, wxID_ANY, "Dodaj element", wxPoint(5, 40), wxSize(120, -1));
-	wxButton* button_izb = new wxButton(panel, wxID_ANY, "Izbrisi element", wxPoint(5, 160), wxSize(120, -1));
-	wxButton* button_izb_vse = new wxButton(panel, wxID_ANY, "Izbrisi vse", wxPoint(5, 280), wxSize(120, -1));
 
-	wxArrayString choices;
-	choices.Add("Element 0");
-	choices.Add("Element 1");
-	choices.Add("Element 2");
-	choices.Add("Element 3");
+	slider = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxPoint(200, 0), wxSize(600, -1));
 
-	choice_dod = new wxChoice(panel, wxID_ANY, wxPoint(5, 20), wxSize(120, -1), choices, wxCB_SORT);
-	choice_dod->SetSelection(0);
-	choice_izb = new wxChoice(panel, wxID_ANY, wxPoint(5, 140), wxSize(120, -1), choices, wxCB_SORT);
-	choice_izb->SetSelection(0);
-
-	slider = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxPoint(200, 0), wxSize(600, -1));
 
 	panel->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseEvent, this);
-	button_dod->Bind(wxEVT_BUTTON, &MainFrame::OnButtonDodClicked, this);
-	button_izb->Bind(wxEVT_BUTTON, &MainFrame::OnButtonIzbClicked, this);
-	button_izb_vse->Bind(wxEVT_BUTTON, &MainFrame::OnButtonIzbVseClicked, this);
-	choice_dod->Bind(wxEVT_CHOICE, &MainFrame::OnChoicesClicked, this);
 	slider->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this);
 
 	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(MainFrame::OnPaint));
+	panel->SetDoubleBuffered(true);
 
 	wxStatusBar* statusBar = CreateStatusBar();
 	statusBar->SetDoubleBuffered(true);
@@ -81,51 +62,7 @@ void MainFrame::OnMouseEvent(wxMouseEvent& evt) {
 	wxLogStatus(message);
 }
 
-void MainFrame::OnButtonDodClicked(wxCommandEvent& evt) {
 
-	if (dx != x || dy != y) {
-
-		wxString naziv_gumb = wxString::Format("Gumb za element %d", choice_dod->GetSelection());
-
-
-		x = dx;
-		y = dy;
-		seznam_valjev.push_back({ x, y });
-
-	}
-	else wxLogStatus("Izberi lokacijo z levik klikom");
-
-	Refresh();
-}
-
-void MainFrame::OnButtonIzbClicked(wxCommandEvent& evt) {
-
-	int n = choice_izb->GetSelection();
-
-	if (n < seznam_valjev.size()) {
-
-		seznam_valjev.erase(seznam_valjev.begin() + n);
-
-		Refresh();
-	}
-	else wxLogStatus("Error");
-}
-
-void MainFrame::OnButtonIzbVseClicked(wxCommandEvent& evt) {
-
-	seznam_valjev.clear();
-
-	Refresh();
-}
-
-void MainFrame::OnChoicesClicked(wxCommandEvent& evt) {
-
-	wxString naziv_element = wxString::Format("Item %d", choice_dod->GetSelection());
-
-	wxLogStatus(naziv_element);
-
-	Refresh();
-}
 
 void MainFrame::OnSliderChanged(wxCommandEvent& evt) {
 
@@ -154,20 +91,43 @@ void MainFrame::OnPaint(wxPaintEvent& event) {
 	dc.DrawRectangle(x_okno, y_okno, sirina, visina);
 
 
+	if (true) { // Admin Logs
+		dc.DrawText(wxString::Format("Slider: %d", rot), wxPoint(x_okno + sirina / 2, y_okno + 20));
+		dc.DrawText(wxString::Format("Cos: %g", cos(rot * 2 * M_PI / 360)), wxPoint(x_okno + sirina / 2, y_okno + 40));
+	}
 
-	dc.DrawText(wxString::Format("%d", rot), wxPoint(x_okno + sirina / 2, y_okno + 20));
-	dc.DrawText(wxString::Format("%g", cos(rot * 2 * M_PI / 12)), wxPoint(x_okno + sirina / 2, y_okno + 40));
-
-	int x = cos(rot * 2 * M_PI / 12) * 120;
-	int y = sin(rot * 2 * M_PI / 12) * 120;
 
 	dc.SetPen(wxPen(wxColor(0,0,0), 3, wxPENSTYLE_SOLID));
-	dc.DrawLine(wxPoint(x_okno + sirina / 2, y_okno + visina / 2), wxPoint(x_okno + sirina / 2 + x, y_okno + visina / 2 + y));
-	//dc.SetPen(wxPen(wxColor(0, 0, 0), 1, wxPENSTYLE_SOLID));
 
-	wxPoint ha (x_okno + sirina / 4, y_okno + visina / 4);
-	wxPoint ha2 = ha + wxPoint(0, 20);
-	dc.DrawLine(ha, ha2);
+	int stZob = 11;
+	sirina -= 160;
+
+	for (int j = 0; j < 2; j++) {
+
+		if (j == 1) sirina += 320;
+		int smer = 1;
+		if (j == 1) smer = -1;
+
+		wxPointList* seznamTock = new wxPointList();
+		wxPoint* tocka0 = new wxPoint();
+
+		for (int i = 0; i < stZob * 2; i++) {
+
+			int dol = 120;
+			if (i % 2 == 0) dol /= 3;
+
+			wxPoint* tocka;
+			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol);
+			seznamTock->Append(tocka);
+
+			if (i == 0) tocka0 = tocka;
+			if (i == stZob * 2 - 1) seznamTock->Append(tocka0);
+		}
+
+		dc.DrawSpline(seznamTock);
+	}
+
+	dc.SetPen(wxPen(wxColor(0, 0, 0), 1, wxPENSTYLE_SOLID));
 }
 
 
