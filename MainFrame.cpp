@@ -24,21 +24,32 @@ bool boolSimulacija = false;
 int casSimulacije = 0;
 
 wxSlider* sliderHitrosti; // Ustvarimo spremenljivko za slider
+wxSlider* sliderDelovniTlak;
+wxSlider* sliderOsnovniTlak;
+wxSlider* sliderMoc;
 
 MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) { // Ustvarimo okno
 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS); // Ustvarimo panel (ozadje na oknu)
 
 
-	wxButton* sim = new wxButton(panel, wxID_ANY, "Simuliraj", wxPoint(10, 10), wxSize(100, 100)); // Definiramo gumb
+	wxButton* sim = new wxButton(panel, wxID_ANY, "Simuliraj", wxPoint(10, 10), wxSize(130, 130)); // Definiramo gumb za simulacijo
+	wxButton* nastavitve = new wxButton(panel, wxID_ANY, "Ponastavi", wxPoint(5, 570), wxSize(100, -1)); // Definiramo gumb za nastavitve
+
 
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
+	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxPoint(850, 270), wxSize(140, -1));
+	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxPoint(850, 320), wxSize(140, -1));
+	sliderMoc = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxPoint(850, 370), wxSize(140, -1));
 
 
 	panel->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseEvent, this); // Zazna levi klik na miski
-	sim->Bind(wxEVT_BUTTON, &MainFrame::OnButtonSimClicked, this); // Zazna klik na gumb
+	sim->Bind(wxEVT_BUTTON, &MainFrame::OnButtonSimClicked, this); // Zazna klik na gumb 'sim'
+	nastavitve->Bind(wxEVT_BUTTON, &MainFrame::OnButtonNastavitveClicked, this); // Zazna klik na gumb 'nastavitve'
 	sliderHitrosti->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this); // Zazna spemembo na slider-ju
-
+	sliderDelovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
+	sliderOsnovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
+	sliderMoc->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
 	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(MainFrame::OnPaint)); // Uvozimo risanje na framu
 	panel->SetDoubleBuffered(true); // Da prikaz na framu ne utripa
 
@@ -60,7 +71,7 @@ void MainFrame::OnMouseEvent(wxMouseEvent& evt) { // Funkcija ob zaznani spremem
 }
 
 
-void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) {
+void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'sim'
 
 	if (!boolSimulacija) {
 		boolSimulacija = true;
@@ -77,6 +88,11 @@ void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) {
 		Refresh();
 		wxYield();
 	}
+}
+
+void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'nastavitve'
+
+
 }
 
 
@@ -111,19 +127,35 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 	dc.DrawRectangle(x_okno, y_okno, sirina, visina); // Izrisemo kvadrat
 
 
-	//Kontrole
+	// Kontrole
 	//// Prikaz barve gumba
 	if (boolSimulacija) { dc.SetPen(wxPen(wxColour(0, 255, 0), 1, wxPENSTYLE_SOLID)); dc.SetBrush(wxBrush(wxColour(153, 255, 153),wxBRUSHSTYLE_SOLID)); } // Ce simulira - zelena barva
 	else { dc.SetPen(wxPen(wxColour(255, 0, 0), 1, wxPENSTYLE_SOLID)); dc.SetBrush(wxBrush(wxColour(255, 153, 153), wxBRUSHSTYLE_SOLID)); } // Ce ne simulira - rdeca barva
 
-	dc.DrawRoundedRectangle(wxPoint(5, 5), wxSize(110, 110), 6); // Izrisemo barvo za prikaz stanja gumba
-	dc.DrawText(wxString::Format("Cas sim: %d", casSimulacije), wxPoint(10, 120));
+	dc.DrawRoundedRectangle(wxPoint(5, 5), wxSize(140, 140), 6); // Izrisemo barvo za prikaz stanja gumba
+	dc.DrawText(wxString::Format("Cas sim: %d", casSimulacije), wxPoint(10, 150));
 
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID)); // Ponastavimo posalo na osnovno
 	dc.SetBrush(wxBrush(wxColour(255, 255, 255), wxBRUSHSTYLE_SOLID)); // Ponastavimo copic na osnovni
 
 	//// Hitrost
-	dc.DrawText("Hitrost simulacije:", wxPoint(150, 5));
+	dc.DrawText("Hitrost simulacije:", wxPoint(155, 3));
+
+	//// Nastavitve crpalke
+	dc.DrawText("Nastavitve crpalke:", wxPoint(5, 225));
+	dc.DrawLine(wxPoint(0, 240), wxPoint(x_okno, 240));
+	dc.DrawLine(wxPoint(0, 240), wxPoint(0, 599));
+	dc.DrawLine(wxPoint(0, 599), wxPoint(x_okno, 599));
+
+	//// Nastavitve simulacije
+	dc.DrawText("Nastavitve simulacije:", wxPoint(x_okno + sirina + 5, 225));
+	dc.DrawLine(wxPoint(x_okno + sirina - 1, 240), wxPoint(sirina_panel, 240));
+	dc.DrawLine(wxPoint(sirina_panel - 1, 240), wxPoint(sirina_panel - 1, 599));
+	dc.DrawLine(wxPoint(x_okno + sirina - 1, 599), wxPoint(sirina_panel, 599));
+
+	dc.DrawText(wxString::Format("Delovni tlak %d bar", sliderDelovniTlak->GetValue()), wxPoint(x_okno + sirina + 5, 255));
+	dc.DrawText(wxString::Format("Osnovni tlak %d bar", sliderOsnovniTlak->GetValue()), wxPoint(x_okno + sirina + 5, 305));
+	dc.DrawText(wxString::Format("Moc crpalke %d kW", sliderMoc->GetValue()), wxPoint(x_okno + sirina + 5, 355));
 
 
 	// Admin Logs
