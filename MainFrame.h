@@ -8,7 +8,8 @@ public:
 
 	void OnPaint(wxPaintEvent& evt); // Za risanje na frame
 private:
-	void OnSliderChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na slider-ju
+	void OnButtonSimClicked(wxCommandEvent& evt); // Funkcija ob pritisku na gumb sim
+	void OnSliderHitrostiChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na slider-ju
 
 	void OnMouseEvent(wxMouseEvent& evt); // Funkcija ob zaznani spremembi na miski
 };
