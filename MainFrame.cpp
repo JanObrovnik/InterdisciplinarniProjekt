@@ -9,7 +9,7 @@
 
 
 //- IZRACUN ZOBNIKA
-void izracunZobnika(podatkovnaBazaZobnika* zobnik) {
+void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
 
 	short z = zobnik->stZob;
 	float m = zobnik->modul;
@@ -37,7 +37,8 @@ std::vector<double> izracun(int n) {
 
 
 
-podatkovnaBazaZobnika zobnik;
+PodatkovnaBazaZobnika zobnik;
+StanjeZobnika stanje;
 
 bool boolSimulacija = false;
 int casSimulacije = 0;
@@ -53,17 +54,19 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 
 	wxButton* sim = new wxButton(panel, wxID_ANY, "Simuliraj", wxPoint(10, 10), wxSize(130, 130)); // Definiramo gumb za simulacijo
+	wxButton* reset = new wxButton(panel, wxID_ANY, "Resetiraj Sim", wxPoint(5, 170), wxSize(140, -1)); // Definiramo gumb za resetiranje simulacije
 	wxButton* nastavitve = new wxButton(panel, wxID_ANY, "Ponastavi", wxPoint(5, 570), wxSize(100, -1)); // Definiramo gumb za nastavitve
 
 
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
-	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxPoint(850, 270), wxSize(140, -1));
-	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxPoint(850, 320), wxSize(140, -1));
-	sliderMoc = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxPoint(850, 370), wxSize(140, -1));
+	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, 20, 0, 100, wxPoint(850, 270), wxSize(140, -1));
+	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, 1, 0, 100, wxPoint(850, 320), wxSize(140, -1));
+	sliderMoc = new wxSlider(panel, wxID_ANY, 40, 0, 100, wxPoint(850, 370), wxSize(140, -1));
 
 
 	panel->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseEvent, this); // Zazna levi klik na miski
 	sim->Bind(wxEVT_BUTTON, &MainFrame::OnButtonSimClicked, this); // Zazna klik na gumb 'sim'
+	reset->Bind(wxEVT_BUTTON, &MainFrame::OnButtonResetClicked, this); // Zazna klik na gumb 'reset'
 	nastavitve->Bind(wxEVT_BUTTON, &MainFrame::OnButtonNastavitveClicked, this); // Zazna klik na gumb 'nastavitve'
 	sliderHitrosti->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this); // Zazna spemembo na slider-ju
 	sliderDelovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
@@ -102,7 +105,6 @@ void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisk
 		boolSimulacija = true;
 	}
 	else if (boolSimulacija) {
-		casSimulacije = 0;
 		boolSimulacija = false;
 	}
 
@@ -113,6 +115,13 @@ void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisk
 		Refresh();
 		wxYield();
 	}
+}
+
+void MainFrame::OnButtonResetClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'reset'
+	
+	boolSimulacija = false;
+	casSimulacije = 0;
+	stanje.zasuk = 0;
 }
 
 void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'nastavitve'
@@ -193,6 +202,7 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 		dc.DrawText(wxString::Format("dw = %g", zobnik.premerKinematskegaKroga), wxPoint(x_okno + 12, y_okno + 95));
 		dc.DrawText(wxString::Format("df = %g", zobnik.premerKorenjskegaKroga), wxPoint(x_okno + 12, y_okno + 110));
 		dc.DrawText(wxString::Format("da = %g", zobnik.premerTemenskegaKroga), wxPoint(x_okno + 12, y_okno + 125));
+		//dc.DrawText(wxString::Format("test: %g", stanje.zasuk), wxPoint(x_okno + 12, y_okno + 155));
 	}
 	
 
@@ -217,10 +227,13 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 			int dol = 120;
 			if (i % 2 == 0) dol /= 3;
 
-			double dod = static_cast<double>(sliderMoc->GetValue() + sliderOsnovniTlak->GetValue() - sliderDelovniTlak->GetValue()) / 100;// dodatek rotacije
+			double dod = static_cast<double>(sliderMoc->GetValue() + sliderOsnovniTlak->GetValue() - sliderDelovniTlak->GetValue()) / 1000;// dodatek rotacije
+			if (boolSimulacija) stanje.zasuk = stanje.zasuk + dod;
+			double zasuk = stanje.zasuk;
 
 			wxPoint* tocka;
-			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol); // Dolocimo tocke zobnikov
+			//tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol); // Dolocimo tocke zobnikov
+			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * zasuk * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * zasuk * 2 * M_PI / 360 + M_PI / stZob * i) * dol);
 			seznamTock->Append(tocka);
 
 			if (i == 0) tocka0 = tocka;

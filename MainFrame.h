@@ -9,6 +9,7 @@ public:
 	void OnPaint(wxPaintEvent& evt); // Za risanje na frame
 private:
 	void OnButtonSimClicked(wxCommandEvent& evt); // Funkcija ob pritisku na gumb 'sim'
+	void OnButtonResetClicked(wxCommandEvent& evt); // Funkcija ob pritisku na gumb 'reset'
 	void OnButtonNastavitveClicked(wxCommandEvent& evt); // Funkcija ob pritisku na gumb 'nastavitve'
 	void OnSliderHitrostiChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na slider-ju
 
@@ -16,7 +17,7 @@ private:
 };
 
 
-struct podatkovnaBazaZobnika { // Baza podatkov
+struct PodatkovnaBazaZobnika { // Baza podatkov
 
 	short stZob;
 	float modul;
@@ -24,4 +25,9 @@ struct podatkovnaBazaZobnika { // Baza podatkov
 	float premerKinematskegaKroga;
 	float premerKorenjskegaKroga;
 	float premerTemenskegaKroga;
+};
+
+struct StanjeZobnika {
+
+	double zasuk = 0; // [deg]
 };
