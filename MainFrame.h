@@ -14,3 +14,14 @@ private:
 
 	void OnMouseEvent(wxMouseEvent& evt); // Funkcija ob zaznani spremembi na miski
 };
+
+
+struct podatkovnaBazaZobnika { // Baza podatkov
+
+	short stZob;
+	float modul;
+	float debelina;
+	float premerKinematskegaKroga;
+	float premerKorenjskegaKroga;
+	float premerTemenskegaKroga;
+};

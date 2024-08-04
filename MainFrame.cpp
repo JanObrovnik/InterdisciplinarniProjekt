@@ -8,7 +8,24 @@
 
 
 
-//- IZRACUN
+//- IZRACUN ZOBNIKA
+void izracunZobnika(podatkovnaBazaZobnika* zobnik) {
+
+	short z = zobnik->stZob;
+	float m = zobnik->modul;
+	float b = zobnik->debelina;
+
+	float dw = m * z;
+	float df = dw - 2.5 * m;
+	float da = dw + 2 * m;
+
+	zobnik->premerKinematskegaKroga = dw;
+	zobnik->premerKorenjskegaKroga = df;
+	zobnik->premerTemenskegaKroga = da;
+}
+
+
+//- IZRACUN MEHANIZMA
 std::vector<double> izracun(int n) {
 	std::vector<double> res;
 
@@ -19,6 +36,8 @@ std::vector<double> izracun(int n) {
 
 
 
+
+podatkovnaBazaZobnika zobnik;
 
 bool boolSimulacija = false;
 int casSimulacije = 0;
@@ -55,6 +74,12 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 	wxStatusBar* statusBar = CreateStatusBar(); // Ustvarimo status bar
 	statusBar->SetDoubleBuffered(true);
+
+
+	zobnik.stZob = 11;
+	zobnik.modul = 4;
+	zobnik.debelina = 40;
+	izracunZobnika(&zobnik);
 }
 
 
@@ -160,10 +185,16 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 
 	// Admin Logs
 	if (true) {
-		dc.DrawText(wxString::Format("Cas: %d", rot), wxPoint(x_okno + sirina / 2, y_okno + 20));
-		dc.DrawText(wxString::Format("Cos: %g", cos(rot * 2 * M_PI / 360)), wxPoint(x_okno + sirina / 2, y_okno + 40));
+		dc.DrawText(wxString::Format("t = %d", rot), wxPoint(x_okno + 12, y_okno + 20));
+		//dc.DrawText(wxString::Format("Cos: %g", cos(rot * 2 * M_PI / 360)), wxPoint(x_okno + 12, y_okno + 35));
+		dc.DrawText(wxString::Format("z = %d", zobnik.stZob), wxPoint(x_okno + 12, y_okno + 50));
+		dc.DrawText(wxString::Format("m = %g", zobnik.modul), wxPoint(x_okno + 12, y_okno + 65));
+		dc.DrawText(wxString::Format("b = %g", zobnik.debelina), wxPoint(x_okno + 12, y_okno + 80));
+		dc.DrawText(wxString::Format("dw = %g", zobnik.premerKinematskegaKroga), wxPoint(x_okno + 12, y_okno + 95));
+		dc.DrawText(wxString::Format("df = %g", zobnik.premerKorenjskegaKroga), wxPoint(x_okno + 12, y_okno + 110));
+		dc.DrawText(wxString::Format("da = %g", zobnik.premerTemenskegaKroga), wxPoint(x_okno + 12, y_okno + 125));
 	}
-
+	
 
 	// Prikaz zobnikov
 	dc.SetPen(wxPen(wxColor(0,0,0), 3, wxPENSTYLE_SOLID)); // Definiramo debelo crto
@@ -186,8 +217,10 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 			int dol = 120;
 			if (i % 2 == 0) dol /= 3;
 
+			double dod = static_cast<double>(sliderMoc->GetValue() + sliderOsnovniTlak->GetValue() - sliderDelovniTlak->GetValue()) / 100;// dodatek rotacije
+
 			wxPoint* tocka;
-			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * rot * 2 * M_PI / 360 + M_PI / stZob * i) * dol); // Dolocimo tocke zobnikov
+			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol); // Dolocimo tocke zobnikov
 			seznamTock->Append(tocka);
 
 			if (i == 0) tocka0 = tocka;
