@@ -43,12 +43,23 @@ StanjeZobnika stanje;
 bool boolSimulacija = false;
 int casSimulacije = 0;
 
+wxSpinCtrl* ctrlStZob;
+wxSpinCtrlDouble* ctrlModul;
+wxSpinCtrlDouble* ctrlDebelina;
+
 wxSlider* sliderHitrosti; // Ustvarimo spremenljivko za slider
 wxSlider* sliderDelovniTlak;
 wxSlider* sliderOsnovniTlak;
 wxSlider* sliderMoc;
 
+
 MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) { // Ustvarimo okno
+
+	zobnik.stZob = 11;
+	zobnik.modul = 4;
+	zobnik.debelina = 40;
+	izracunZobnika(&zobnik);
+
 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS); // Ustvarimo panel (ozadje na oknu)
 
@@ -56,6 +67,11 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	wxButton* sim = new wxButton(panel, wxID_ANY, "Simuliraj", wxPoint(10, 10), wxSize(130, 130)); // Definiramo gumb za simulacijo
 	wxButton* reset = new wxButton(panel, wxID_ANY, "Resetiraj Sim", wxPoint(5, 170), wxSize(140, -1)); // Definiramo gumb za resetiranje simulacije
 	wxButton* nastavitve = new wxButton(panel, wxID_ANY, "Ponastavi", wxPoint(5, 570), wxSize(100, -1)); // Definiramo gumb za nastavitve
+
+
+	ctrlStZob = new wxSpinCtrl(panel, wxID_ANY, "", wxPoint(75,250), wxSize(70, -1), wxSP_WRAP, 0, 30, zobnik.stZob); // Definiramo spinCtrl
+	ctrlModul = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(75, 280), wxSize(70, -1), wxSP_WRAP, 0, 20, zobnik.modul, .5);
+	ctrlDebelina = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(75, 310), wxSize(70, -1), wxSP_WRAP, 0, 100, zobnik.debelina, .1);
 
 
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
@@ -79,10 +95,7 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	statusBar->SetDoubleBuffered(true);
 
 
-	zobnik.stZob = 11;
-	zobnik.modul = 4;
-	zobnik.debelina = 40;
-	izracunZobnika(&zobnik);
+	
 }
 
 
@@ -126,7 +139,12 @@ void MainFrame::OnButtonResetClicked(wxCommandEvent& evt) { // Funkcija ob priti
 
 void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'nastavitve'
 
+	zobnik.stZob = ctrlStZob->GetValue();
+	zobnik.modul = ctrlModul->GetValue();
+	zobnik.debelina = ctrlDebelina->GetValue();
+	izracunZobnika(&zobnik);
 
+	Refresh();
 }
 
 
@@ -180,6 +198,14 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 	dc.DrawLine(wxPoint(0, 240), wxPoint(x_okno, 240));
 	dc.DrawLine(wxPoint(0, 240), wxPoint(0, 599));
 	dc.DrawLine(wxPoint(0, 599), wxPoint(x_okno, 599));
+
+	dc.DrawText("St zob:", wxPoint(5, 253));
+	dc.DrawText("Modul:", wxPoint(5, 283));
+	dc.DrawText("Debelina:", wxPoint(5, 313));
+
+	dc.DrawText(wxString::Format("dw = %g", zobnik.premerKinematskegaKroga), wxPoint(5, 353));
+	dc.DrawText(wxString::Format("df = %g", zobnik.premerKorenjskegaKroga), wxPoint(5, 383));
+	dc.DrawText(wxString::Format("da = %g", zobnik.premerTemenskegaKroga), wxPoint(5, 413));
 
 	//// Nastavitve simulacije
 	dc.DrawText("Nastavitve simulacije:", wxPoint(x_okno + sirina + 5, 225));
