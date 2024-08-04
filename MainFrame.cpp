@@ -81,13 +81,14 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 
 	panel->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseEvent, this); // Zazna levi klik na miski
-	sim->Bind(wxEVT_BUTTON, &MainFrame::OnButtonSimClicked, this); // Zazna klik na gumb 'sim'
-	reset->Bind(wxEVT_BUTTON, &MainFrame::OnButtonResetClicked, this); // Zazna klik na gumb 'reset'
-	nastavitve->Bind(wxEVT_BUTTON, &MainFrame::OnButtonNastavitveClicked, this); // Zazna klik na gumb 'nastavitve'
+	sim->Bind(wxEVT_BUTTON, &MainFrame::OnButtonSimClicked, this); // Zazna klik na gumb
+	reset->Bind(wxEVT_BUTTON, &MainFrame::OnButtonResetClicked, this);
+	nastavitve->Bind(wxEVT_BUTTON, &MainFrame::OnButtonNastavitveClicked, this);
 	sliderHitrosti->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this); // Zazna spemembo na slider-ju
 	sliderDelovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
 	sliderOsnovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
 	sliderMoc->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
+
 	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(MainFrame::OnPaint)); // Uvozimo risanje na framu
 	panel->SetDoubleBuffered(true); // Da prikaz na framu ne utripa
 
@@ -135,9 +136,15 @@ void MainFrame::OnButtonResetClicked(wxCommandEvent& evt) { // Funkcija ob priti
 	boolSimulacija = false;
 	casSimulacije = 0;
 	stanje.zasuk = 0;
+
+	Refresh();
 }
 
 void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'nastavitve'
+
+	boolSimulacija = false;
+	casSimulacije = 0;
+	stanje.zasuk = 0;
 
 	zobnik.stZob = ctrlStZob->GetValue();
 	zobnik.modul = ctrlModul->GetValue();
@@ -203,9 +210,9 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 	dc.DrawText("Modul:", wxPoint(5, 283));
 	dc.DrawText("Debelina:", wxPoint(5, 313));
 
-	dc.DrawText(wxString::Format("dw = %g", zobnik.premerKinematskegaKroga), wxPoint(5, 353));
-	dc.DrawText(wxString::Format("df = %g", zobnik.premerKorenjskegaKroga), wxPoint(5, 383));
-	dc.DrawText(wxString::Format("da = %g", zobnik.premerTemenskegaKroga), wxPoint(5, 413));
+	dc.DrawText(wxString::Format("dw = %g mm", zobnik.premerKinematskegaKroga), wxPoint(5, 353));
+	dc.DrawText(wxString::Format("df = %g mm", zobnik.premerKorenjskegaKroga), wxPoint(5, 383));
+	dc.DrawText(wxString::Format("da = %g mm", zobnik.premerTemenskegaKroga), wxPoint(5, 413));
 
 	//// Nastavitve simulacije
 	dc.DrawText("Nastavitve simulacije:", wxPoint(x_okno + sirina + 5, 225));
@@ -219,7 +226,7 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 
 
 	// Admin Logs
-	if (true) {
+	if (false) {
 		dc.DrawText(wxString::Format("t = %d", rot), wxPoint(x_okno + 12, y_okno + 20));
 		//dc.DrawText(wxString::Format("Cos: %g", cos(rot * 2 * M_PI / 360)), wxPoint(x_okno + 12, y_okno + 35));
 		dc.DrawText(wxString::Format("z = %d", zobnik.stZob), wxPoint(x_okno + 12, y_okno + 50));
@@ -232,9 +239,32 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 	}
 	
 
-	// Prikaz zobnikov
+	// Prikaz crpalke
+	//// Prikaz ohisja
 	dc.SetPen(wxPen(wxColor(0,0,0), 3, wxPENSTYLE_SOLID)); // Definiramo debelo crto
 
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 - 102 - 60), wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 - 102)); // levo ohisje
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 - 102), wxPoint(x_okno + sirina / 2 - 30 - 50, y_okno + visina / 2 - 102));
+	dc.DrawArc(wxPoint(x_okno + sirina / 2 - 30 - 50, y_okno + visina / 2 - 102), wxPoint(x_okno + sirina / 2 - 30 - 50, y_okno + visina / 2 + 102), wxPoint(x_okno + sirina / 2 - 30 - 50, y_okno + visina / 2));
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 - 30 - 50, y_okno + visina / 2 + 102), wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 + 102));
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 + 102), wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 + 102 + 60));
+
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 + 30, y_okno + visina / 2 + 102 + 60), wxPoint(x_okno + sirina / 2 + 30, y_okno + visina / 2 + 102)); // desno ohisje
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 + 30, y_okno + visina / 2 + 102), wxPoint(x_okno + sirina / 2 + 30 + 50, y_okno + visina / 2 + 102));
+	dc.DrawArc(wxPoint(x_okno + sirina / 2 + 30 + 50, y_okno + visina / 2 + 102), wxPoint(x_okno + sirina / 2 + 30 + 50, y_okno + visina / 2 - 102), wxPoint(x_okno + sirina / 2 + 30 + 50, y_okno + visina / 2));
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 + 30 + 50, y_okno + visina / 2 - 102), wxPoint(x_okno + sirina / 2 + 30, y_okno + visina / 2 - 102));
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 + 30, y_okno + visina / 2 - 102), wxPoint(x_okno + sirina / 2 + 30, y_okno + visina / 2 - 102 - 60));
+
+	dc.SetPen(wxPen(wxColor(255, 255, 255), 3, wxPENSTYLE_SOLID)); // Odstranjevanje grde crte zaradi 'DrawArc'
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 - 30 - 50, y_okno + visina / 2 - 102 + 2), wxPoint(x_okno + sirina / 2 - 30 - 50, y_okno + visina / 2 + 102 - 2));
+	dc.DrawLine(wxPoint(x_okno + sirina / 2 + 30 + 50, y_okno + visina / 2 + 102 - 2), wxPoint(x_okno + sirina / 2 + 30 + 50, y_okno + visina / 2 - 102 + 2));
+	dc.SetPen(wxPen(wxColor(0, 0, 0), 3, wxPENSTYLE_SOLID));
+
+	//// Vrednosti tlakov
+	dc.DrawText(wxString::Format("p = %d bar", sliderDelovniTlak->GetValue()), wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 - 102 - 80));
+	dc.DrawText(wxString::Format("p = %d bar", sliderOsnovniTlak->GetValue()), wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 + 102 + 60));
+	
+	//// Prikaz zobnikov
 	int stZob = 11; // Stevilo zob na zobiku
 	sirina -= 160;
 
