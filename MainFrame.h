@@ -8,10 +8,11 @@ public:
 
 	void OnPaint(wxPaintEvent& evt); // Za risanje na frame
 private:
-	void OnButtonSimClicked(wxCommandEvent& evt); // Funkcija ob pritisku na gumb 'sim'
-	void OnButtonResetClicked(wxCommandEvent& evt); // Funkcija ob pritisku na gumb 'reset'
-	void OnButtonNastavitveClicked(wxCommandEvent& evt); // Funkcija ob pritisku na gumb 'nastavitve'
-	void OnSliderHitrostiChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na slider-ju
+	void OnButtonSimClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'sim'
+	void OnButtonResetClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'reset'
+	void OnButtonNastavitveClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'nastavitve'
+	void OnKonstParameterChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na SpinCtrl-ju
+	void OnSliderHitrostiChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na Slider-ju
 
 	void OnMouseEvent(wxMouseEvent& evt); // Funkcija ob zaznani spremembi na miski
 };

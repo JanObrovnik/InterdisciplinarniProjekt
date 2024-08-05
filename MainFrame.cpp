@@ -47,10 +47,13 @@ wxSpinCtrl* ctrlStZob;
 wxSpinCtrlDouble* ctrlModul;
 wxSpinCtrlDouble* ctrlDebelina;
 
+wxRadioBox* konstParameter;
+
 wxSlider* sliderHitrosti; // Ustvarimo spremenljivko za slider
 wxSlider* sliderDelovniTlak;
 wxSlider* sliderOsnovniTlak;
 wxSlider* sliderMoc;
+wxSlider* sliderVrtljaji;
 
 
 MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) { // Ustvarimo okno
@@ -74,20 +77,29 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	ctrlDebelina = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(75, 310), wxSize(70, -1), wxSP_WRAP, 0, 100, zobnik.debelina, .1);
 
 
+	wxArrayString konstPar;
+	konstPar.Add("Konst. moc");
+	konstPar.Add("Konst. vrtljaji");
+	konstParameter = new wxRadioBox(panel, wxID_ANY, "Konstantna velicina", wxPoint(855, 50), wxDefaultSize, konstPar, 1, wxRA_SPECIFY_COLS);
+
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
 	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, 20, 0, 100, wxPoint(850, 270), wxSize(140, -1));
 	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, 1, 0, 100, wxPoint(850, 320), wxSize(140, -1));
 	sliderMoc = new wxSlider(panel, wxID_ANY, 40, 0, 100, wxPoint(850, 370), wxSize(140, -1));
+	sliderVrtljaji = new wxSlider(panel, wxID_ANY, 40, 0, 100, wxPoint(850, 420), wxSize(140, -1));
+	sliderVrtljaji->Disable();
 
 
 	panel->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseEvent, this); // Zazna levi klik na miski
 	sim->Bind(wxEVT_BUTTON, &MainFrame::OnButtonSimClicked, this); // Zazna klik na gumb
 	reset->Bind(wxEVT_BUTTON, &MainFrame::OnButtonResetClicked, this);
 	nastavitve->Bind(wxEVT_BUTTON, &MainFrame::OnButtonNastavitveClicked, this);
+	konstParameter->Bind(wxEVT_RADIOBOX, &MainFrame::OnKonstParameterChanged, this); // Zazna spemembo na RadioBox-u
 	sliderHitrosti->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this); // Zazna spemembo na slider-ju
 	sliderDelovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
 	sliderOsnovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
 	sliderMoc->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
+	sliderVrtljaji->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
 
 	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(MainFrame::OnPaint)); // Uvozimo risanje na framu
 	panel->SetDoubleBuffered(true); // Da prikaz na framu ne utripa
@@ -113,7 +125,7 @@ void MainFrame::OnMouseEvent(wxMouseEvent& evt) { // Funkcija ob zaznani spremem
 }
 
 
-void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'sim'
+void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na Gumb 'sim'
 
 	if (!boolSimulacija) {
 		boolSimulacija = true;
@@ -125,13 +137,13 @@ void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisk
 
 	while (boolSimulacija) {
 		casSimulacije++;
-		Sleep(51 - sliderHitrosti->GetValue()); // Mogoc spremenit hitrost z zmansanjem Vrtljaja, mogoc ne
+		Sleep(51 - sliderHitrosti->GetValue()); //////////// Mogoc spremenit hitrost z zmansanjem Vrtljaja, mogoc ne
 		Refresh();
 		wxYield();
 	}
 }
 
-void MainFrame::OnButtonResetClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'reset'
+void MainFrame::OnButtonResetClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na Gumb 'reset'
 	
 	boolSimulacija = false;
 	casSimulacije = 0;
@@ -140,7 +152,7 @@ void MainFrame::OnButtonResetClicked(wxCommandEvent& evt) { // Funkcija ob priti
 	Refresh();
 }
 
-void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na gumb 'nastavitve'
+void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob pritisku na Gumb 'nastavitve'
 
 	boolSimulacija = false;
 	casSimulacije = 0;
@@ -154,8 +166,22 @@ void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob 
 	Refresh();
 }
 
+void MainFrame::OnKonstParameterChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na RadioBox-u
 
-void MainFrame::OnSliderHitrostiChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na slider-ju
+	if (konstParameter->GetSelection() == 0) {
+		sliderMoc->Enable();
+		sliderVrtljaji->Disable();
+	}
+	else if (konstParameter->GetSelection() == 1) {
+		sliderMoc->Disable();
+		sliderVrtljaji->Enable();
+	}
+
+	if (!boolSimulacija) Refresh();
+}
+
+
+void MainFrame::OnSliderHitrostiChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na Slider-ju
 
 	wxLogStatus("Slider change event");
 
@@ -223,6 +249,7 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 	dc.DrawText(wxString::Format("Delovni tlak %d bar", sliderDelovniTlak->GetValue()), wxPoint(x_okno + sirina + 5, 255));
 	dc.DrawText(wxString::Format("Osnovni tlak %d bar", sliderOsnovniTlak->GetValue()), wxPoint(x_okno + sirina + 5, 305));
 	dc.DrawText(wxString::Format("Moc crpalke %d kW", sliderMoc->GetValue()), wxPoint(x_okno + sirina + 5, 355));
+	dc.DrawText(wxString::Format("Vrljaji crpalke %d min^-1", sliderVrtljaji->GetValue()), wxPoint(x_okno + sirina + 5, 405));
 
 
 	// Admin Logs
@@ -283,7 +310,10 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 			int dol = 120;
 			if (i % 2 == 0) dol /= 3;
 
-			double dod = static_cast<double>(sliderMoc->GetValue() + sliderOsnovniTlak->GetValue() - sliderDelovniTlak->GetValue()) / 1000;// dodatek rotacije
+			double dod = static_cast<double>(sliderOsnovniTlak->GetValue() - sliderDelovniTlak->GetValue()) / 1000;// dodatek rotacije
+			if (konstParameter->GetSelection() == 0) dod += static_cast<double>(sliderMoc->GetValue()) / 1000;
+			else if (konstParameter->GetSelection() == 1) dod += static_cast<double>(sliderVrtljaji->GetValue()) / 1000;
+
 			if (boolSimulacija) stanje.zasuk = stanje.zasuk + dod;
 			double zasuk = stanje.zasuk;
 
