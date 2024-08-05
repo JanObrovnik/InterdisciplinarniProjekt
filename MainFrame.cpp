@@ -5,11 +5,12 @@
 #include <time.h>
 #include <vector>
 #include <math.h>
+#include <numeric>
 
 
 
 //- IZRACUN ZOBNIKA
-void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
+static void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
 
 	short z = zobnik->stZob;
 	float m = zobnik->modul;
@@ -26,12 +27,15 @@ void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
 
 
 //- IZRACUN MEHANIZMA
-std::vector<double> izracun(int n) {
-	std::vector<double> res;
+static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vector<double> seznamSil, double vrtljaji) {
 
+	double dt = 1. / 1000; // korak
 
-	
-	return res;
+	if (konstParameter == "Konst. moc") vrtljaji = std::accumulate(seznamSil.begin(), seznamSil.end(), 0);
+
+	vrtljaji *= dt;
+
+	stanje->zasuk += vrtljaji;
 }
 
 
@@ -106,9 +110,6 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 	wxStatusBar* statusBar = CreateStatusBar(); // Ustvarimo status bar
 	statusBar->SetDoubleBuffered(true);
-
-
-	
 }
 
 
@@ -168,11 +169,11 @@ void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob 
 
 void MainFrame::OnKonstParameterChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na RadioBox-u
 
-	if (konstParameter->GetSelection() == 0) {
+	if (konstParameter->GetStringSelection() == "Konst. moc") {
 		sliderMoc->Enable();
 		sliderVrtljaji->Disable();
 	}
-	else if (konstParameter->GetSelection() == 1) {
+	else if (konstParameter->GetStringSelection() == "Konst. vrtljaji") {
 		sliderMoc->Disable();
 		sliderVrtljaji->Enable();
 	}
@@ -310,16 +311,17 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 			int dol = 120;
 			if (i % 2 == 0) dol /= 3;
 
-			double dod = static_cast<double>(sliderOsnovniTlak->GetValue() - sliderDelovniTlak->GetValue()) / 1000;// dodatek rotacije
-			if (konstParameter->GetSelection() == 0) dod += static_cast<double>(sliderMoc->GetValue()) / 1000;
-			else if (konstParameter->GetSelection() == 1) dod += static_cast<double>(sliderVrtljaji->GetValue()) / 1000;
+			std::vector<double> seznamSil; // Seznam sil
+			seznamSil.push_back(-sliderDelovniTlak->GetValue());
+			seznamSil.push_back(sliderOsnovniTlak->GetValue());
+			seznamSil.push_back(sliderMoc->GetValue());
+			
+			if (boolSimulacija) izracun(&stanje, static_cast<std::string>(konstParameter->GetStringSelection()), seznamSil, sliderVrtljaji->GetValue()); // Izracun
 
-			if (boolSimulacija) stanje.zasuk = stanje.zasuk + dod;
-			double zasuk = stanje.zasuk;
+			double zasuk = stanje.zasuk; // Lokalna spremenljivka
 
 			wxPoint* tocka;
-			//tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * (rot * (1 + dod)) * 2 * M_PI / 360 + M_PI / stZob * i) * dol); // Dolocimo tocke zobnikov
-			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * zasuk * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * zasuk * 2 * M_PI / 360 + M_PI / stZob * i) * dol);
+			tocka = new wxPoint(x_okno + sirina / 2 + cos(smer * zasuk * 2 * M_PI / 360 + M_PI / stZob * i) * dol, y_okno + visina / 2 + sin(smer * zasuk * 2 * M_PI / 360 + M_PI / stZob * i) * dol); // Dolocitev tock zobnikov
 			seznamTock->Append(tocka);
 
 			if (i == 0) tocka0 = tocka;
