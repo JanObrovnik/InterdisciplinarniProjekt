@@ -27,11 +27,22 @@ static void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
 
 
 //- IZRACUN MEHANIZMA
-static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vector<double> seznamSil, double vrtljaji) {
+static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vector<wxSlider*> seznamSil, double vrtljaji) {
 
 	double dt = 1. / 1000; // korak
 
-	if (konstParameter == "Konst. moc") vrtljaji = std::accumulate(seznamSil.begin(), seznamSil.end(), 0);
+	if (konstParameter == "Konst. moc") {
+		vrtljaji = 0;
+		vrtljaji -= seznamSil[0]->GetValue();
+		vrtljaji += seznamSil[1]->GetValue();
+		vrtljaji += seznamSil[2]->GetValue();
+	}
+	else if (konstParameter == "Konst. vrtljaji") {
+		int vrt = vrtljaji + seznamSil[0]->GetValue() - seznamSil[1]->GetValue(); // Neki utripajo zobniki
+		//if (vrt < 0) seznamSil[2]->SetValue(0);
+		//else seznamSil[2]->SetValue(vrt);
+		seznamSil[2]->SetValue(vrt);
+	}
 
 	vrtljaji *= dt;
 
@@ -89,7 +100,7 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
 	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, 20, 0, 100, wxPoint(850, 270), wxSize(140, -1));
 	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, 1, 0, 100, wxPoint(850, 320), wxSize(140, -1));
-	sliderMoc = new wxSlider(panel, wxID_ANY, 40, 0, 100, wxPoint(850, 370), wxSize(140, -1));
+	sliderMoc = new wxSlider(panel, wxID_ANY, 40, -100, 200, wxPoint(850, 370), wxSize(140, -1));
 	sliderVrtljaji = new wxSlider(panel, wxID_ANY, 40, 0, 100, wxPoint(850, 420), wxSize(140, -1));
 	sliderVrtljaji->Disable();
 
@@ -183,8 +194,6 @@ void MainFrame::OnKonstParameterChanged(wxCommandEvent& evt) { // Funkcija ob za
 
 
 void MainFrame::OnSliderHitrostiChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na Slider-ju
-
-	wxLogStatus("Slider change event");
 
 	if (!boolSimulacija) Refresh(); // 'Refresh()' pozene 'MainFrame::OnPaint(wxPaintEvent& event)'
 }
@@ -293,7 +302,7 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 	dc.DrawText(wxString::Format("p = %d bar", sliderOsnovniTlak->GetValue()), wxPoint(x_okno + sirina / 2 - 30, y_okno + visina / 2 + 102 + 60));
 	
 	//// Prikaz zobnikov
-	int stZob = 11; // Stevilo zob na zobiku
+	int stZob = zobnik.stZob; // Stevilo zob na zobiku
 	sirina -= 160;
 
 	for (int j = 0; j < 2; j++) { // Izrisemo 2 zobnika
@@ -311,10 +320,10 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 			int dol = 120;
 			if (i % 2 == 0) dol /= 3;
 
-			std::vector<double> seznamSil; // Seznam sil
-			seznamSil.push_back(-sliderDelovniTlak->GetValue());
-			seznamSil.push_back(sliderOsnovniTlak->GetValue());
-			seznamSil.push_back(sliderMoc->GetValue());
+			std::vector<wxSlider*> seznamSil; // Seznam sil
+			seznamSil.push_back(sliderDelovniTlak);
+			seznamSil.push_back(sliderOsnovniTlak);
+			seznamSil.push_back(sliderMoc);
 			
 			if (boolSimulacija) izracun(&stanje, static_cast<std::string>(konstParameter->GetStringSelection()), seznamSil, sliderVrtljaji->GetValue()); // Izracun
 
