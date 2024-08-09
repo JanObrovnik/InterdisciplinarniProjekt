@@ -12,7 +12,7 @@ private:
 	void OnButtonResetClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'reset'
 	void OnButtonNastavitveClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'nastavitve'
 	void OnKonstParameterChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na SpinCtrl-ju
-	void OnSliderHitrostiChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na Slider-ju
+	void OnSliderChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na Slider-ju
 
 	void OnMouseEvent(wxMouseEvent& evt); // Funkcija ob zaznani spremembi na miski
 };
@@ -22,13 +22,17 @@ struct PodatkovnaBazaZobnika { // Baza podatkov
 
 	short stZob;
 	float modul;
-	float debelina;
-	float premerKinematskegaKroga;
-	float premerKorenjskegaKroga;
-	float premerTemenskegaKroga;
+	float debelina; // [mm]
+	float premerKinematskegaKroga; // [mm]
+	float premerKorenjskegaKroga; // [mm]
+	float premerTemenskegaKroga; // [mm]
 };
 
 struct StanjeZobnika {
 
 	double zasuk = 0; // [deg]
+	double vrtljaji; // [min^-1]
+	double moc; // [kW]
+	double delovniTlak; // [bar]
+	double osnovniTlak; // [bar]
 };

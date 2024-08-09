@@ -27,26 +27,53 @@ static void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
 
 
 //- IZRACUN MEHANIZMA
-static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vector<wxSlider*> seznamSil, double vrtljaji) {
+static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vector<wxSlider*> seznamSil) {
 
-	double dt = 1. / 1000; // korak
+	/*double dt = 1. / 100; // korak
+
+	double vrtljaji = seznamSil[3]->GetValue();
+	double moc = seznamSil[2]->GetValue();
 
 	if (konstParameter == "Konst. moc") {
 		vrtljaji = 0;
 		vrtljaji -= seznamSil[0]->GetValue();
 		vrtljaji += seznamSil[1]->GetValue();
-		vrtljaji += seznamSil[2]->GetValue();
+		vrtljaji += moc;
+		seznamSil[3]->SetValue(vrtljaji);
 	}
 	else if (konstParameter == "Konst. vrtljaji") {
-		int vrt = vrtljaji + seznamSil[0]->GetValue() - seznamSil[1]->GetValue(); // Neki utripajo zobniki
-		//if (vrt < 0) seznamSil[2]->SetValue(0);
-		//else seznamSil[2]->SetValue(vrt);
-		seznamSil[2]->SetValue(vrt);
+		moc = 0;
+		moc += vrtljaji;
+		moc += seznamSil[0]->GetValue();
+		moc -= seznamSil[1]->GetValue();
+		seznamSil[2]->SetValue(moc);
 	}
 
 	vrtljaji *= dt;
+	
+	stanje->zasuk += vrtljaji;*/
+////////////////////
+	double dt = 1. / 100; // korak
 
-	stanje->zasuk += vrtljaji;
+	double vrtljaji = stanje->vrtljaji;
+	double moc = stanje->moc;
+
+	if (konstParameter == "Konst. moc") {
+		vrtljaji = 0;
+		vrtljaji -= stanje->delovniTlak;
+		vrtljaji += stanje->osnovniTlak;
+		vrtljaji += moc;
+		stanje->vrtljaji = vrtljaji;
+	}
+	else if (konstParameter == "Konst. vrtljaji") {
+		moc = 0;
+		moc += vrtljaji;
+		moc += stanje->delovniTlak;
+		moc -= stanje->osnovniTlak;
+		stanje->moc = moc;
+	}
+
+	stanje->zasuk += vrtljaji * dt;
 }
 
 
@@ -78,6 +105,11 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	zobnik.debelina = 40;
 	izracunZobnika(&zobnik);
 
+	stanje.vrtljaji = 40;
+	stanje.moc = 40;
+	stanje.delovniTlak = 20;
+	stanje.osnovniTlak = 1;
+
 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS); // Ustvarimo panel (ozadje na oknu)
 
@@ -98,10 +130,10 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	konstParameter = new wxRadioBox(panel, wxID_ANY, "Konstantna velicina", wxPoint(855, 50), wxDefaultSize, konstPar, 1, wxRA_SPECIFY_COLS);
 
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
-	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, 20, 0, 100, wxPoint(850, 270), wxSize(140, -1));
-	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, 1, 0, 100, wxPoint(850, 320), wxSize(140, -1));
-	sliderMoc = new wxSlider(panel, wxID_ANY, 40, -100, 200, wxPoint(850, 370), wxSize(140, -1));
-	sliderVrtljaji = new wxSlider(panel, wxID_ANY, 40, 0, 100, wxPoint(850, 420), wxSize(140, -1));
+	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, stanje.delovniTlak, 0, 100, wxPoint(850, 270), wxSize(140, -1));
+	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, stanje.osnovniTlak, 0, 100, wxPoint(850, 320), wxSize(140, -1));
+	sliderMoc = new wxSlider(panel, wxID_ANY, stanje.moc, 0, 100, wxPoint(850, 370), wxSize(140, -1));
+	sliderVrtljaji = new wxSlider(panel, wxID_ANY, stanje.vrtljaji, 0, 100, wxPoint(850, 420), wxSize(140, -1));
 	sliderVrtljaji->Disable();
 
 
@@ -110,11 +142,11 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	reset->Bind(wxEVT_BUTTON, &MainFrame::OnButtonResetClicked, this);
 	nastavitve->Bind(wxEVT_BUTTON, &MainFrame::OnButtonNastavitveClicked, this);
 	konstParameter->Bind(wxEVT_RADIOBOX, &MainFrame::OnKonstParameterChanged, this); // Zazna spemembo na RadioBox-u
-	sliderHitrosti->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this); // Zazna spemembo na slider-ju
-	sliderDelovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
-	sliderOsnovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
-	sliderMoc->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
-	sliderVrtljaji->Bind(wxEVT_SLIDER, &MainFrame::OnSliderHitrostiChanged, this);
+	sliderHitrosti->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this); // Zazna spemembo na slider-ju
+	sliderDelovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this);
+	sliderOsnovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this);
+	sliderMoc->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this);
+	sliderVrtljaji->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this);
 
 	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(MainFrame::OnPaint)); // Uvozimo risanje na framu
 	panel->SetDoubleBuffered(true); // Da prikaz na framu ne utripa
@@ -152,6 +184,14 @@ void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisk
 		Sleep(51 - sliderHitrosti->GetValue()); //////////// Mogoc spremenit hitrost z zmansanjem Vrtljaja, mogoc ne
 		Refresh();
 		wxYield();
+
+		/**/std::vector<wxSlider*> seznamSil; // Seznam sil
+		seznamSil.push_back(sliderDelovniTlak);
+		seznamSil.push_back(sliderOsnovniTlak);
+		seznamSil.push_back(sliderMoc);
+		seznamSil.push_back(sliderVrtljaji);
+
+		izracun(&stanje, static_cast<std::string>(konstParameter->GetStringSelection()), seznamSil); // Izracun
 	}
 }
 
@@ -193,7 +233,12 @@ void MainFrame::OnKonstParameterChanged(wxCommandEvent& evt) { // Funkcija ob za
 }
 
 
-void MainFrame::OnSliderHitrostiChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na Slider-ju
+void MainFrame::OnSliderChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na Slider-ju
+
+	stanje.vrtljaji = sliderVrtljaji->GetValue();
+	stanje.moc = sliderMoc->GetValue();
+	stanje.delovniTlak = sliderDelovniTlak->GetValue();
+	stanje.osnovniTlak = sliderOsnovniTlak->GetValue();
 
 	if (!boolSimulacija) Refresh(); // 'Refresh()' pozene 'MainFrame::OnPaint(wxPaintEvent& event)'
 }
@@ -256,10 +301,10 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 	dc.DrawLine(wxPoint(sirina_panel - 1, 240), wxPoint(sirina_panel - 1, 599));
 	dc.DrawLine(wxPoint(x_okno + sirina - 1, 599), wxPoint(sirina_panel, 599));
 
-	dc.DrawText(wxString::Format("Delovni tlak %d bar", sliderDelovniTlak->GetValue()), wxPoint(x_okno + sirina + 5, 255));
-	dc.DrawText(wxString::Format("Osnovni tlak %d bar", sliderOsnovniTlak->GetValue()), wxPoint(x_okno + sirina + 5, 305));
-	dc.DrawText(wxString::Format("Moc crpalke %d kW", sliderMoc->GetValue()), wxPoint(x_okno + sirina + 5, 355));
-	dc.DrawText(wxString::Format("Vrljaji crpalke %d min^-1", sliderVrtljaji->GetValue()), wxPoint(x_okno + sirina + 5, 405));
+	dc.DrawText(wxString::Format("Delovni tlak %g bar", stanje.delovniTlak), wxPoint(x_okno + sirina + 5, 255));
+	dc.DrawText(wxString::Format("Osnovni tlak %g bar", stanje.osnovniTlak), wxPoint(x_okno + sirina + 5, 305));
+	dc.DrawText(wxString::Format("Moc crpalke %g kW", stanje.moc), wxPoint(x_okno + sirina + 5, 355));
+	dc.DrawText(wxString::Format("Vrljaji crpalke %g min^-1", stanje.vrtljaji), wxPoint(x_okno + sirina + 5, 405));
 
 
 	// Admin Logs
@@ -319,13 +364,6 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 
 			int dol = 120;
 			if (i % 2 == 0) dol /= 3;
-
-			std::vector<wxSlider*> seznamSil; // Seznam sil
-			seznamSil.push_back(sliderDelovniTlak);
-			seznamSil.push_back(sliderOsnovniTlak);
-			seznamSil.push_back(sliderMoc);
-			
-			if (boolSimulacija) izracun(&stanje, static_cast<std::string>(konstParameter->GetStringSelection()), seznamSil, sliderVrtljaji->GetValue()); // Izracun
 
 			double zasuk = stanje.zasuk; // Lokalna spremenljivka
 
