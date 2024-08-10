@@ -11,6 +11,7 @@ private:
 	void OnButtonSimClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'sim'
 	void OnButtonResetClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'reset'
 	void OnButtonNastavitveClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'nastavitve'
+	void OnButtonGraforisClicked(wxCommandEvent& evt); // Funkcija ob pritisku na Gumb 'graforis'
 	void OnKonstParameterChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na SpinCtrl-ju
 	void OnSliderChanged(wxCommandEvent& evt); // Funkcija ob zaznani spremembi na Slider-ju
 

@@ -1,4 +1,5 @@
 #include "MainFrame.h"
+#include "GrafFrame.h"
 #include <wx/wx.h>
 #include <wx/spinctrl.h>
 #include <stdlib.h>
@@ -29,30 +30,6 @@ static void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
 //- IZRACUN MEHANIZMA
 static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vector<wxSlider*> seznamSil) {
 
-	/*double dt = 1. / 100; // korak
-
-	double vrtljaji = seznamSil[3]->GetValue();
-	double moc = seznamSil[2]->GetValue();
-
-	if (konstParameter == "Konst. moc") {
-		vrtljaji = 0;
-		vrtljaji -= seznamSil[0]->GetValue();
-		vrtljaji += seznamSil[1]->GetValue();
-		vrtljaji += moc;
-		seznamSil[3]->SetValue(vrtljaji);
-	}
-	else if (konstParameter == "Konst. vrtljaji") {
-		moc = 0;
-		moc += vrtljaji;
-		moc += seznamSil[0]->GetValue();
-		moc -= seznamSil[1]->GetValue();
-		seznamSil[2]->SetValue(moc);
-	}
-
-	vrtljaji *= dt;
-	
-	stanje->zasuk += vrtljaji;*/
-////////////////////
 	double dt = 1. / 100; // korak
 
 	double vrtljaji = stanje->vrtljaji;
@@ -117,6 +94,7 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	wxButton* sim = new wxButton(panel, wxID_ANY, "Simuliraj", wxPoint(10, 10), wxSize(130, 130)); // Definiramo gumb za simulacijo
 	wxButton* reset = new wxButton(panel, wxID_ANY, "Resetiraj Sim", wxPoint(5, 170), wxSize(140, -1)); // Definiramo gumb za resetiranje simulacije
 	wxButton* nastavitve = new wxButton(panel, wxID_ANY, "Ponastavi", wxPoint(5, 570), wxSize(100, -1)); // Definiramo gumb za nastavitve
+	wxButton* graforis = new wxButton(panel, wxID_ANY, "Graforis", wxPoint(860, 10), wxSize(130, 130)); // Definiramo gumb, da odpremo okno za risanje grafov
 
 
 	ctrlStZob = new wxSpinCtrl(panel, wxID_ANY, "", wxPoint(75,250), wxSize(70, -1), wxSP_WRAP, 0, 30, zobnik.stZob); // Definiramo spinCtrl
@@ -127,7 +105,7 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	wxArrayString konstPar;
 	konstPar.Add("Konst. moc");
 	konstPar.Add("Konst. vrtljaji");
-	konstParameter = new wxRadioBox(panel, wxID_ANY, "Konstantna velicina", wxPoint(855, 50), wxDefaultSize, konstPar, 1, wxRA_SPECIFY_COLS);
+	konstParameter = new wxRadioBox(panel, wxID_ANY, "Konstantna velicina", wxPoint(855, 500), wxDefaultSize, konstPar, 1, wxRA_SPECIFY_COLS);
 
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
 	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, stanje.delovniTlak, 0, 100, wxPoint(850, 270), wxSize(140, -1));
@@ -141,6 +119,7 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	sim->Bind(wxEVT_BUTTON, &MainFrame::OnButtonSimClicked, this); // Zazna klik na gumb
 	reset->Bind(wxEVT_BUTTON, &MainFrame::OnButtonResetClicked, this);
 	nastavitve->Bind(wxEVT_BUTTON, &MainFrame::OnButtonNastavitveClicked, this);
+	graforis->Bind(wxEVT_BUTTON, &MainFrame::OnButtonGraforisClicked, this);
 	konstParameter->Bind(wxEVT_RADIOBOX, &MainFrame::OnKonstParameterChanged, this); // Zazna spemembo na RadioBox-u
 	sliderHitrosti->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this); // Zazna spemembo na slider-ju
 	sliderDelovniTlak->Bind(wxEVT_SLIDER, &MainFrame::OnSliderChanged, this);
@@ -185,7 +164,7 @@ void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisk
 		Refresh();
 		wxYield();
 
-		/**/std::vector<wxSlider*> seznamSil; // Seznam sil
+		std::vector<wxSlider*> seznamSil; // Seznam sil
 		seznamSil.push_back(sliderDelovniTlak);
 		seznamSil.push_back(sliderOsnovniTlak);
 		seznamSil.push_back(sliderMoc);
@@ -217,6 +196,22 @@ void MainFrame::OnButtonNastavitveClicked(wxCommandEvent& evt) { // Funkcija ob 
 
 	Refresh();
 }
+
+void MainFrame::OnButtonGraforisClicked(wxCommandEvent& evt) {
+
+	boolSimulacija = false;
+	casSimulacije = 0;
+	stanje.zasuk = 0;
+
+
+	GrafFrame* grafFrame = new GrafFrame("Simulacija hidravlicne crpalke"); // ustvarimo frame z imenom
+
+	grafFrame->SetClientSize(1000, 600); // velikost aplikacije
+	grafFrame->Center();
+
+	grafFrame->Show();
+}
+
 
 void MainFrame::OnKonstParameterChanged(wxCommandEvent& evt) { // Funkcija ob zaznani spremembi na RadioBox-u
 
@@ -274,6 +269,11 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 
 	dc.DrawRoundedRectangle(wxPoint(5, 5), wxSize(140, 140), 6); // Izrisemo barvo za prikaz stanja gumba
 	dc.DrawText(wxString::Format("Cas sim: %d", casSimulacije), wxPoint(10, 150));
+
+	dc.SetPen(wxPen(wxColour(0, 0, 255), 1, wxPENSTYLE_SOLID)); 
+	dc.SetBrush(wxBrush(wxColour(153, 153, 255), wxBRUSHSTYLE_SOLID));
+
+	dc.DrawRoundedRectangle(wxPoint(855, 5), wxSize(140, 140), 6); // Izrisemo barvo za prikaz stanja gumba
 
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID)); // Ponastavimo posalo na osnovno
 	dc.SetBrush(wxBrush(wxColour(255, 255, 255), wxBRUSHSTYLE_SOLID)); // Ponastavimo copic na osnovni

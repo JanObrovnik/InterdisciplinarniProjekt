@@ -9,4 +9,4 @@
 
 # C++ Source koda
 
-[MainFrame.cpp](MainFrame.cpp/)
+[SourceKoda](SourceKoda/)
