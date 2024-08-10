@@ -9,4 +9,6 @@ public:
 	void OnPaint(wxPaintEvent& evt);
 private:
 	void OnSizeChanged(wxSizeEvent& evt);
+
+	void OnButtonRisiClicked(wxCommandEvent& evt);
 };
