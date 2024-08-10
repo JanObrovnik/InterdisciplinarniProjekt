@@ -40,7 +40,7 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 
 		if (seznamEnacb[i] == "x") for (double j = 0; j <= vrednost; j += korak) {
 
-			res[i + 1].push_back(j);
+			res[i + 1].push_back(j - 5);
 		}
 
 		else if (seznamEnacb[i] == "2x") for (double j = 0; j <= vrednost; j += korak) {
@@ -50,17 +50,19 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 
 		else if (seznamEnacb[i] == "x2") for (double j = 0; j <= vrednost; j += korak) {
 
-			res[i + 1].push_back(j * j);
+			res[i + 1].push_back(j * j + 5);
 		}
 	}
 
-	std::vector<std::vector<double>> izr = res;
+	(*grafX).assign({ 0., .2, .4, .6, .8, 1. }); // X os
+
+	std::vector<std::vector<double>> izr = res; // Y osi
 	izr.erase(izr.begin() + 0);
 	double max = maxVrednost(izr);
 	double min = minVrednost(izr);
 	
-	for (int i = 0; i < (*grafX).size(); i++) (*grafX)[i] *= vrednost;
-	for (int i = 0; i < (*grafY).size(); i++) (*grafY)[i] *= max; ////////////// Spremenit da lahko zacetek razlicen od 0
+	for (int i = 0; i < (*grafX).size(); i++) (*grafX)[i] *= vrednost; // X os
+	for (int i = 0; i < (*grafY).size(); i++) (*grafY)[i] = min + i * (max - min) / ((*grafY).size() - 1); // Y osi
 
 	return res;
 }
@@ -113,26 +115,26 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 
 	//// Vrednosti
 	dc.SetPen(wxPen(wxColour(153, 153, 153), 1, wxPENSTYLE_SOLID));
-	for (int i = 0; i < grafX.size(); i++) {
-		dc.DrawText(wxString::Format("%g", grafX[i]), wxPoint(120 + i * (size.x - 140) / 5 - 10, size.y - 75));
+	for (int i = 0; i < grafX.size(); i++) { // X os
+		dc.DrawText(wxString::Format("%g", grafX[i]), wxPoint(120 + i * (size.x - 140) / 5 - 3, size.y - 75));
 		if (i > 0) dc.DrawLine(wxPoint(120 + i * (size.x - 140) / 5, size.y - 75), wxPoint(120 + i * (size.x - 140) / 5, 20));
 	}
-	for (int i = 0; i < grafY.size(); i++) {
-		dc.DrawText(wxString::Format("%g", grafY[i]), wxPoint(120 - 20, size.y - 80 - i * (size.y - 100) / 5));
-		if (i > 0) dc.DrawLine(wxPoint(120 - 20, size.y - 80 - i * (size.y - 100) / 5), wxPoint(size.x - 20, size.y - 80 - i * (size.y - 100) / 5));
+	for (int i = 0; i < grafY.size(); i++) { // Y os
+		dc.DrawText(wxString::Format("%g", grafY[i]), wxPoint(120 - 20, size.y - 80 - i * (size.y - 100) / 5 - 7));
+		if (i > 0) dc.DrawLine(wxPoint(120 - 5, size.y - 80 - i * (size.y - 100) / 5), wxPoint(size.x - 20, size.y - 80 - i * (size.y - 100) / 5));
 	}
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID));
 
 	//// Linije
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 2, wxPENSTYLE_SOLID));
-	for (int i = 0; i < res.size(); i++) {
+	for (int i = 1; i < res.size(); i++) {
 
 		wxPointList* seznamTock = new wxPointList();
 
 		for (int j = 0; j < res[i].size(); j++) {
 
 			wxPoint* tocka;
-			tocka = new wxPoint(120 + (size.x - 140) * res[0][j] / grafX[grafX.size() - 1], size.y - 80 - (size.y - 100) * res[i][j] / grafY[grafY.size() - 1]);
+			tocka = new wxPoint(120 + (size.x - 140) * res[0][j] / grafX[grafX.size() - 1], size.y - 80 - (size.y - 100) * (res[i][j] - grafY[0]) / (grafY[grafY.size() - 1] - grafY[0]));
 			seznamTock->Append(tocka);
 		}
 
