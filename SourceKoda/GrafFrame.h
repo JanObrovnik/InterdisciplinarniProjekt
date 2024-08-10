@@ -11,4 +11,5 @@ private:
 	void OnSizeChanged(wxSizeEvent& evt);
 
 	void OnButtonRisiClicked(wxCommandEvent& evt);
+	void OnButtonShraniClicked(wxCommandEvent& evt);
 };

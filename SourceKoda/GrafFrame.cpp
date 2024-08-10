@@ -7,6 +7,7 @@
 #include <vector>
 #include <math.h>
 #include <numeric>
+#include <fstream>
 
 
 
@@ -69,6 +70,10 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 
 
 
+std::vector<std::vector<double>> res; // Resitve
+
+std::vector<std::string> seznamEnacb; // Seznam enacb za izmerit
+
 std::vector<double> grafX{ 0., .2, .4, .6, .8, 1. };
 std::vector<double> grafY{ 0., .2, .4, .6, .8, 1. };
 
@@ -86,7 +91,9 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 	
 	wxButton* risi = new wxButton(panel, wxID_ANY, "Risi", wxPoint(10, 530), wxSize(80, 60));
+	wxButton* shraniData = new wxButton(panel, wxID_ANY, "Shrani meritve", wxPoint(640, 560), wxDefaultSize);
 
+	velicineY.Clear();
 	velicineY.Add("x");
 	velicineY.Add("2x");
 	velicineY.Add("x2");
@@ -102,6 +109,8 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 
 	risi->Bind(wxEVT_BUTTON, &GrafFrame::OnButtonRisiClicked, this);
+	shraniData->Bind(wxEVT_BUTTON, &GrafFrame::OnButtonShraniClicked, this);
+
 
 	panel->Bind(wxEVT_SIZE, &GrafFrame::OnSizeChanged, this); // Zazna spremembo velikosti okna
 	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(GrafFrame::OnPaint));
@@ -119,6 +128,42 @@ void GrafFrame::OnButtonRisiClicked(wxCommandEvent& evt) {
 	Refresh();
 }
 
+void GrafFrame::OnButtonShraniClicked(wxCommandEvent& evt) {
+
+	std::string ime = __DATE__;
+	wxFileDialog* fileDialog = new wxFileDialog(this, "Shrani", wxEmptyString, "Meritev " + ime, "Text files (*.txt)|*.txt", wxFD_SAVE);
+
+	if (fileDialog->ShowModal() == wxID_OK) {
+
+		std::string pot = static_cast<std::string>(fileDialog->GetPath());
+
+		std::ofstream shrani;
+		shrani.open(pot, std::ios::out);
+
+		if (shrani.is_open()) {
+
+			shrani << "Zapis meritev simulacije:" << std::endl;
+			shrani << __DATE__ << ", " << __TIME__ << ":" << std::endl << std::endl << std::endl;
+
+			shrani << radioVelicinaX->GetString(radioVelicinaX->GetSelection()) << "\t";
+			for (int i = 0; i < seznamEnacb.size(); i++) shrani << seznamEnacb[i] << "\t";
+			shrani << std::endl << std::endl;
+
+			for (int i = 0; i < res[0].size(); i++) {
+
+				for (int j = 0; j < res.size(); j++) {
+
+					shrani << res[j][i] << "\t";
+				}
+				shrani << std::endl;
+			}
+
+
+			shrani.close();
+		}
+	}
+}
+
 
 void GrafFrame::OnPaint(wxPaintEvent& event) {
 
@@ -128,10 +173,9 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 
 
 	// Graf
-	std::vector<std::string> seznamEnacb;
+	seznamEnacb.clear();
 	for (int i = 0; i < velicineY.size(); i++) if (checkListBoxYOs->IsChecked(i)) seznamEnacb.push_back(static_cast<std::string>(velicineY[i]));
 
-	std::vector<std::vector<double>> res;
 	if (seznamEnacb.size() > 0) res = izracunGraf(seznamEnacb, ctrlKorakMeritveX->GetValue(), ctrlVrednostMeritveX->GetValue(), &grafX, &grafY);
 
 	//// Ozadje
