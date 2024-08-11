@@ -74,6 +74,8 @@ std::vector<std::vector<double>> res; // Resitve
 
 std::vector<std::string> seznamEnacb; // Seznam enacb za izmerit
 
+std::vector<wxPen> seznamBarv; // Seznam razlicnih barv za risanje grafa
+
 std::vector<double> grafX{ 0., .2, .4, .6, .8, 1. };
 std::vector<double> grafY{ 0., .2, .4, .6, .8, 1. };
 
@@ -87,6 +89,16 @@ wxRadioBox* radioVelicinaX;
 
 
 GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) {
+
+	seznamBarv.clear();
+	seznamBarv.push_back(wxPen(wxColour(0, 0, 204), 2, wxPENSTYLE_SOLID));
+	seznamBarv.push_back(wxPen(wxColour(0, 204, 0), 2, wxPENSTYLE_SOLID));
+	seznamBarv.push_back(wxPen(wxColour(204, 0, 0), 2, wxPENSTYLE_SOLID));
+	seznamBarv.push_back(wxPen(wxColour(0, 204, 204), 2, wxPENSTYLE_SOLID));
+	seznamBarv.push_back(wxPen(wxColour(204, 204, 0), 2, wxPENSTYLE_SOLID));
+	seznamBarv.push_back(wxPen(wxColour(204, 0, 204), 2, wxPENSTYLE_SOLID));
+	seznamBarv.push_back(wxPen(wxColour(102, 102, 102), 2, wxPENSTYLE_SOLID));
+	seznamBarv.push_back(wxPen(wxColour(204, 204, 204), 2, wxPENSTYLE_SOLID));
 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 	
@@ -177,6 +189,7 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 	for (int i = 0; i < velicineY.size(); i++) if (checkListBoxYOs->IsChecked(i)) seznamEnacb.push_back(static_cast<std::string>(velicineY[i]));
 
 	if (seznamEnacb.size() > 0) res = izracunGraf(seznamEnacb, ctrlKorakMeritveX->GetValue(), ctrlVrednostMeritveX->GetValue(), &grafX, &grafY);
+	else res.clear();
 
 	//// Ozadje
 	wxPoint pointGraf(120, 20);
@@ -186,19 +199,31 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 	dc.DrawRectangle(pointGraf, sizeGraf);
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID));
 
-	dc.DrawLine(wxPoint(120, size.y - 80), wxPoint(size.x, size.y - 80)); // X os
-	dc.DrawLine(wxPoint(size.x, size.y - 80), wxPoint(size.x - 10, size.y - 85)); //////////////////// preureditev 'size.x' in 'size.y' z 'pointGraf' in 'sizeGraf'
-	dc.DrawLine(wxPoint(size.x, size.y - 80), wxPoint(size.x - 10, size.y - 75));
-	dc.DrawText(radioVelicinaX->GetString(radioVelicinaX->GetSelection()), wxPoint(size.x - 32, sizeGraf.y));
+	dc.DrawLine(wxPoint(pointGraf.x, pointGraf.y + sizeGraf.y), wxPoint(size.x, pointGraf.y + sizeGraf.y)); // X os
+	dc.DrawLine(wxPoint(size.x, pointGraf.y + sizeGraf.y), wxPoint(size.x - 10, pointGraf.y + sizeGraf.y - 5));
+	dc.DrawLine(wxPoint(size.x, pointGraf.y + sizeGraf.y), wxPoint(size.x - 10, pointGraf.y + sizeGraf.y + 5));
 	
-	dc.DrawLine(wxPoint(120, size.y - 80), wxPoint(120, 0)); // Y os
-	dc.DrawLine(wxPoint(120, 0), wxPoint(125, 10));
-	dc.DrawLine(wxPoint(120, 0), wxPoint(115, 10));
+	dc.DrawLine(wxPoint(pointGraf.x, pointGraf.y + sizeGraf.y), wxPoint(pointGraf.x, 0)); // Y os
+	dc.DrawLine(wxPoint(pointGraf.x, 0), wxPoint(pointGraf.x + 5, 10));
+	dc.DrawLine(wxPoint(pointGraf.x, 0), wxPoint(pointGraf.x - 5, 10));
+
+	//// Velicine
+	dc.DrawText(radioVelicinaX->GetString(radioVelicinaX->GetSelection()), wxPoint(size.x - 32, sizeGraf.y)); // X os
+
+	dc.DrawRectangle(wxPoint(10, 10), wxSize(80, 15 * seznamEnacb.size()));// Y os
+	for (int i = 0; i < seznamEnacb.size(); i++) {
+		
+		if (i == seznamBarv.size()) i -= seznamBarv.size();
+		dc.SetPen(seznamBarv[i]);
+		dc.DrawLine(wxPoint(12, 16 + i * 15), wxPoint(24, 16 + i * 15));
+		
+		dc.DrawText(seznamEnacb[i], wxPoint(30, 8 + i * 15));
+	}
 
 	//// Vrednosti
 	dc.SetPen(wxPen(wxColour(153, 153, 153), 1, wxPENSTYLE_SOLID));
 	for (int i = 0; i < grafX.size(); i++) { // X os
-		dc.DrawText(wxString::Format("%g", grafX[i]), wxPoint(120 + i * sizeGraf.x / 5 - 3, size.y - 75));
+		dc.DrawText(wxString::Format("%g", grafX[i]), wxPoint(120 + i * sizeGraf.x / 5 - 3, size.y - 75)); //////////////////// preureditev 'size.x' in 'size.y' z 'pointGraf' in 'sizeGraf'
 		if (i > 0) dc.DrawLine(wxPoint(120 + i * sizeGraf.x / 5, size.y - 75), wxPoint(120 + i * sizeGraf.x / 5, 20));
 	}
 	for (int i = 0; i < grafY.size(); i++) { // Y os
@@ -211,6 +236,8 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 2, wxPENSTYLE_SOLID));
 	for (int i = 1; i < res.size(); i++) {
 
+		if (i - 1 == seznamBarv.size()) i -= seznamBarv.size();
+		dc.SetPen(seznamBarv[i - 1]);
 		wxPointList* seznamTock = new wxPointList();
 
 		for (int j = 0; j < res[i].size(); j++) {
@@ -232,9 +259,6 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 
 		for (int i = 0; i < res.size(); i++) for (int j = 0; j < res[i].size(); j++) dc.DrawText(wxString::Format("%g", res[i][j]), wxPoint(5 + i * 25, 15 + j * 12));
 
-		std::vector<double> vec = *max_element(res.begin(), res.end());
-		for (int i = 0; i < vec.size(); i++) dc.DrawText(wxString::Format("%g", vec[i]), wxPoint(5, 165 + i * 12));
-
-		dc.DrawText(velicineY[0], wxPoint(30, 165));
+		dc.DrawText(velicineY[0], wxPoint(5, 165));
 	}
 }
