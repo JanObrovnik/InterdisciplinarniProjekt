@@ -145,6 +145,7 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 	
+	wxButton* nastavi = new wxButton(panel, wxID_ANY, "Nastavitve\nzobnika", wxPoint(10, 335), wxSize(92, 92));
 	wxButton* risi = new wxButton(panel, wxID_ANY, "Risi", wxPoint(10, 435), wxSize(92, 92));
 	wxButton* shraniData = new wxButton(panel, wxID_ANY, "Shrani\nmeritve", wxPoint(10, 535), wxSize(92, 92));
 
@@ -167,6 +168,7 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	radioVelicinaX = new wxRadioBox(panel, wxID_ANY, "", wxPoint(460, 585), wxDefaultSize, velicineX, 1, wxRA_SPECIFY_ROWS);
 
 
+	nastavi->Bind(wxEVT_BUTTON, &GrafFrame::OnButtonNastaviClicked, this);
 	risi->Bind(wxEVT_BUTTON, &GrafFrame::OnButtonRisiClicked, this);
 	shraniData->Bind(wxEVT_BUTTON, &GrafFrame::OnButtonShraniClicked, this);
 	radioVelicinaX->Bind(wxEVT_RADIOBOX, &GrafFrame::OnRadioVelicinaXChange, this);
@@ -174,13 +176,19 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 	panel->Bind(wxEVT_SIZE, &GrafFrame::OnSizeChanged, this); // Zazna spremembo velikosti okna
 	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(GrafFrame::OnPaint));
-	panel->SetDoubleBuffered(true);
+	//panel->SetDoubleBuffered(true);
 }
 
 
 void GrafFrame::OnSizeChanged(wxSizeEvent& evt) {
 
 	Refresh();
+}
+
+void GrafFrame::OnButtonNastaviClicked(wxCommandEvent& evt) {
+
+	NastavitveZobnika* nastZob = new NastavitveZobnika();
+	nastZob->Show();
 }
 
 void GrafFrame::OnButtonRisiClicked(wxCommandEvent& evt) {
@@ -353,4 +361,71 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 
 		dc.DrawText(velicineY[0], wxPoint(5, 165));
 	}
+}
+
+
+
+
+wxSpinCtrlDouble* spinCtrlStZob;
+wxSpinCtrlDouble* spinCtrlModul;
+wxSpinCtrlDouble* spinCtrlDebelina;
+wxSpinCtrlDouble* spinCtrlKotPhi;
+
+NastavitveZobnika::NastavitveZobnika() : wxFrame(nullptr, wxID_ANY, wxString::Format("Nastavitve priseska"), wxPoint(0, 0), wxSize(250, 300)) {
+
+	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
+
+	wxButton* apply = new wxButton(panel, wxID_ANY, "Uporabi", wxPoint(10, 230), wxDefaultSize);
+	wxButton* close = new wxButton(panel, wxID_ANY, "Zapri", wxPoint(90, 230), wxDefaultSize);
+
+	spinCtrlStZob = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(160, 10), wxDefaultSize, wxSP_WRAP, 7, 23, podatkiZobnika.stZob, 1);
+	spinCtrlModul = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(160, 40), wxSize(70, -1), wxSP_WRAP, 1, 10, podatkiZobnika.modul, .5);
+	spinCtrlDebelina = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(160, 70), wxSize(70, -1), wxSP_WRAP, 0, 100, podatkiZobnika.debelina, .1);
+	spinCtrlKotPhi = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(160, 100), wxSize(70, -1), wxSP_WRAP, 14.5, 20, podatkiZobnika.kotPhi / M_PI * 180, .1);
+
+
+	apply->Bind(wxEVT_BUTTON, &NastavitveZobnika::OnButtonUporabiClicked, this);
+	close->Bind(wxEVT_BUTTON, &NastavitveZobnika::OnButtonZapriClicked, this);
+
+	panel->Connect(wxEVT_PAINT, wxPaintEventHandler(NastavitveZobnika::OnPaint));
+}
+
+
+void NastavitveZobnika::OnButtonUporabiClicked(wxCommandEvent& evt) {
+
+	podatkiZobnika.stZob = spinCtrlStZob->GetValue();
+	podatkiZobnika.modul = spinCtrlModul->GetValue();
+	podatkiZobnika.debelina = spinCtrlDebelina->GetValue();
+
+	podatkiZobnika.premerKinematskegaKroga = podatkiZobnika.modul * podatkiZobnika.stZob;
+	podatkiZobnika.premerKorenjskegaKroga = podatkiZobnika.premerKinematskegaKroga - 2.5 * podatkiZobnika.modul;
+	podatkiZobnika.premerTemenskegaKroga = podatkiZobnika.premerKinematskegaKroga + 2 * podatkiZobnika.modul;
+
+	podatkiZobnika.kotPhi = spinCtrlKotPhi->GetValue() / 180. * M_PI;
+
+	podatkiZobnika.dolzinaKontakta = 
+		sqrt(pow(podatkiZobnika.premerTemenskegaKroga, 2) - pow(podatkiZobnika.premerKinematskegaKroga, 2) * pow(cos(podatkiZobnika.kotPhi), 2)) - podatkiZobnika.premerKinematskegaKroga * sin(podatkiZobnika.kotPhi);
+
+	Refresh();
+}
+
+void NastavitveZobnika::OnButtonZapriClicked(wxCommandEvent& evt) {
+
+	Destroy();
+}
+
+
+void NastavitveZobnika::OnPaint(wxPaintEvent& event) {
+
+	wxPaintDC dc(this);
+
+	dc.DrawText("Stevilo zob: z [/]", wxPoint(10, 12));
+	dc.DrawText("Modul zobnika: m [mm]", wxPoint(10, 42));
+	dc.DrawText("Debelina zobnika: b [mm]", wxPoint(10, 72));
+	dc.DrawText("Kot ubiranja: fi [deg]", wxPoint(10, 102));
+
+	dc.DrawText(wxString::Format("Premer kinematskega kroga: dw = %g mm", podatkiZobnika.premerKinematskegaKroga), wxPoint(10, 150));
+	dc.DrawText(wxString::Format("Premer korenjskega kroga: da = %g mm", podatkiZobnika.premerKorenjskegaKroga), wxPoint(10, 165));
+	dc.DrawText(wxString::Format("Premer temenskega kroga: df = %g mm", podatkiZobnika.premerTemenskegaKroga), wxPoint(10, 180));
+	dc.DrawText(wxString::Format("Dolzina kontakta: l = %g mm", podatkiZobnika.dolzinaKontakta), wxPoint(10, 195));
 }

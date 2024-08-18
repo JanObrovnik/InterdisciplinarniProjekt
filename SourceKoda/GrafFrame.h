@@ -10,9 +10,22 @@ public:
 private:
 	void OnSizeChanged(wxSizeEvent& evt);
 
+	void OnButtonNastaviClicked(wxCommandEvent& evt);
 	void OnButtonRisiClicked(wxCommandEvent& evt);
 	void OnButtonShraniClicked(wxCommandEvent& evt);
+
 	void OnRadioVelicinaXChange(wxCommandEvent& evt);
+};
+
+class NastavitveZobnika : public wxFrame
+{
+public:
+	NastavitveZobnika();
+
+	void OnPaint(wxPaintEvent& evt);
+private:
+	void OnButtonUporabiClicked(wxCommandEvent& evt);
+	void OnButtonZapriClicked(wxCommandEvent& evt);
 };
 
 
