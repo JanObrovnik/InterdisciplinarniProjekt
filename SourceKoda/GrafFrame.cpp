@@ -30,52 +30,86 @@ double minVrednost(std::vector<std::vector<double>> res) {
 }
 
 
-std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnacb, double korak, double vrednost, std::vector<double>* grafX, std::vector<double>* grafY) {
+std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnacb, std::string spremenljivka, double korak, double vrednost, std::vector<double>* grafX, std::vector<double>* grafY, PodatkiZobnika* zobnik) {
 
 	std::vector<std::vector<double>> res;
 	res.resize(seznamEnacb.size() + 1);
 
-	for (double j = 0; j <= vrednost; j += korak) res[0].push_back(j); // X os
+
+
+
+	if (spremenljivka == "u [mm]") { // X os
+
+		for (double j = -zobnik->dolzinaKontakta / 2; j <= zobnik->dolzinaKontakta / 2; j += korak) res[0].push_back(j);
+	}
+
+	else {
+
+		for (double j = 0; j <= vrednost; j += korak) res[0].push_back(j);
+	}
+
 
 	for (int i = 0; i < seznamEnacb.size(); i++) { // Y osi
 
-		if (seznamEnacb[i] == "x") for (double j = 0; j <= vrednost; j += korak) {
-
+		if (seznamEnacb[i] == "x") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
+			
 			res[i + 1].push_back(j - 5);
 		}
 
-		else if (seznamEnacb[i] == "2x") for (double j = 0; j <= vrednost; j += korak) {
+		else if (seznamEnacb[i] == "2x") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
 			res[i + 1].push_back(2 * j);
 		}
 
-		else if (seznamEnacb[i] == "x2") for (double j = 0; j <= vrednost; j += korak) {
+		else if (seznamEnacb[i] == "x2") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
 			res[i + 1].push_back(j * j + 5);
 		}
 
-		else for (double j = 0; j <= vrednost; j += korak) {
+		else if (seznamEnacb[i] == "V(u) [l/s]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
+
+			double u = j / 1000;
+
+			float b = zobnik->debelina / 1000;
+			float da = zobnik->premerTemenskegaKroga / 1000;
+			float dw = zobnik->premerKinematskegaKroga / 1000;
+			float n = 2; // vrtljaji
+
+			double resitev = (b * M_PI * n * (pow(da, 2) / 2 - pow(dw, 2) / 2 - 2 * pow(u, 2))) * 1000;
+
+			res[i + 1].push_back(resitev);
+		}
+
+		else for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
 			res[i + 1].push_back(0);
 		}
 	}
 
-	(*grafX).assign({ 0., .2, .4, .6, .8, 1. }); // X os
 
-	std::vector<std::vector<double>> izr = res; // Y osi
-	izr.erase(izr.begin() + 0);
-	double max = maxVrednost(izr);
-	double min = minVrednost(izr);
-	
-	for (int i = 0; i < (*grafX).size(); i++) (*grafX)[i] *= vrednost; // X os ///////////////////// izpise velik decimalk
-	for (int i = 0; i < (*grafY).size(); i++) (*grafY)[i] = min + i * (max - min) / ((*grafY).size() - 1); // Y osi
+	std::vector<std::vector<double>> izr1; // X os
+	izr1.resize(2);
+	izr1[0] = res[0];
+	double maxX = maxVrednost(izr1);
+	double minX = minVrednost(izr1);
+	for (int i = 0; i < (*grafX).size(); i++) (*grafX)[i] = minX + i * (maxX - minX) / ((*grafX).size() - 1); // X os
+
+
+	std::vector<std::vector<double>> izr2 = res; // Y os
+	izr2.erase(izr2.begin() + 0);
+	double maxY = maxVrednost(izr2);
+	double minY = minVrednost(izr2);
+	for (int i = 0; i < (*grafY).size(); i++) (*grafY)[i] = minY + i * (maxY - minY) / ((*grafY).size() - 1); // Y os
 
 	if ((*grafY)[0] == (*grafY)[(*grafX).size() - 1]) (*grafY).assign({ (*grafY)[0] - .5, (*grafY)[0] - .3, (*grafY)[0] - .1, (*grafY)[0] + .1, (*grafY)[0] + .3, (*grafY)[0] + .5 }); // Popravek za konst. funkcije
+
 
 	return res;
 }
 
 
+
+PodatkiZobnika podatkiZobnika;
 
 std::vector<std::vector<double>> res; // Resitve
 
@@ -85,6 +119,7 @@ std::vector<wxPen> seznamBarv; // Seznam razlicnih barv za risanje grafa
 
 std::vector<double> grafX{ 0., .2, .4, .6, .8, 1. };
 std::vector<double> grafY{ 0., .2, .4, .6, .8, 1. };
+
 
 wxArrayString velicineY;
 wxCheckListBox* checkListBoxYOs;
@@ -110,27 +145,31 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 	
-	wxButton* risi = new wxButton(panel, wxID_ANY, "Risi", wxPoint(10, 475), wxSize(108, 54));
-	wxButton* shraniData = new wxButton(panel, wxID_ANY, "Shrani meritve", wxPoint(10, 535), wxSize(108, 54));
+	wxButton* risi = new wxButton(panel, wxID_ANY, "Risi", wxPoint(10, 435), wxSize(92, 92));
+	wxButton* shraniData = new wxButton(panel, wxID_ANY, "Shrani\nmeritve", wxPoint(10, 535), wxSize(92, 92));
 
 	velicineY.Clear();
 	velicineY.Add("x");
 	velicineY.Add("2x");
 	velicineY.Add("x2");
 	velicineY.Add("0");
-	checkListBoxYOs = new wxCheckListBox(panel, wxID_ANY, wxPoint(10, 25), wxSize(108, -1), velicineY);
+	velicineY.Add("V(u) [l/s]");
+	checkListBoxYOs = new wxCheckListBox(panel, wxID_ANY, wxPoint(10, 25), wxSize(92, -1), velicineY);
+	checkListBoxYOs->SetString(4, "/");
 
-	ctrlVrednostMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(878, 566), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 1000, 10, .1);
-	ctrlKorakMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(215, 566), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 10, 1, .01);
+	ctrlVrednostMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(878, 586), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 1000, 10, .1);
+	ctrlKorakMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(215, 586), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 10, .01, .01);
 	
 	wxArrayString velicineX;
 	velicineX.Add("t [s]");
 	velicineX.Add("x [m]");
-	radioVelicinaX = new wxRadioBox(panel, wxID_ANY, "", wxPoint(505, 555), wxDefaultSize, velicineX, 1, wxRA_SPECIFY_ROWS);
+	velicineX.Add("u [mm]");
+	radioVelicinaX = new wxRadioBox(panel, wxID_ANY, "", wxPoint(460, 585), wxDefaultSize, velicineX, 1, wxRA_SPECIFY_ROWS);
 
 
 	risi->Bind(wxEVT_BUTTON, &GrafFrame::OnButtonRisiClicked, this);
 	shraniData->Bind(wxEVT_BUTTON, &GrafFrame::OnButtonShraniClicked, this);
+	radioVelicinaX->Bind(wxEVT_RADIOBOX, &GrafFrame::OnRadioVelicinaXChange, this);
 
 
 	panel->Bind(wxEVT_SIZE, &GrafFrame::OnSizeChanged, this); // Zazna spremembo velikosti okna
@@ -166,7 +205,7 @@ void GrafFrame::OnButtonShraniClicked(wxCommandEvent& evt) {
 			shrani << "Zapis meritev simulacije:" << std::endl;
 			shrani << __DATE__ << ", " << __TIME__ << ":" << std::endl << std::endl << std::endl;
 
-			shrani << radioVelicinaX->GetString(radioVelicinaX->GetSelection()) << "\t";
+			shrani << radioVelicinaX->GetStringSelection() << "\t";
 			for (int i = 0; i < seznamEnacb.size(); i++) shrani << seznamEnacb[i] << "\t";
 			shrani << std::endl << std::endl;
 
@@ -178,10 +217,42 @@ void GrafFrame::OnButtonShraniClicked(wxCommandEvent& evt) {
 				}
 				shrani << std::endl;
 			}
-
+			
 
 			shrani.close();
 		}
+	}
+}
+
+void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
+
+	for (int i = 0; i < velicineY.size(); i++) checkListBoxYOs->Check(i, false);
+
+
+	for (int i = 0; i < velicineY.size(); i++) checkListBoxYOs->SetString(i, velicineY[i]);
+
+	if (radioVelicinaX->GetStringSelection() == "t [s]") {
+	
+		checkListBoxYOs->SetString(4, "/");
+
+		ctrlVrednostMeritveX->Enable();
+	}
+
+	else if (radioVelicinaX->GetStringSelection() == "x [m]") {
+
+		checkListBoxYOs->SetString(4, "/");
+
+		ctrlVrednostMeritveX->Enable();
+	}
+
+	else if (radioVelicinaX->GetStringSelection() == "u [mm]") {
+
+		checkListBoxYOs->SetString(0, "/");
+		checkListBoxYOs->SetString(1, "/");
+		checkListBoxYOs->SetString(2, "/");
+		checkListBoxYOs->SetString(3, "/");
+
+		ctrlVrednostMeritveX->Disable();
 	}
 }
 
@@ -195,17 +266,19 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 
 	// Graf
 	seznamEnacb.clear();
-	for (int i = 0; i < velicineY.size(); i++) if (checkListBoxYOs->IsChecked(i)) seznamEnacb.push_back(static_cast<std::string>(velicineY[i]));
+	for (int i = 0; i < velicineY.size(); i++) if (checkListBoxYOs->IsChecked(i)) seznamEnacb.push_back(static_cast<std::string>(checkListBoxYOs->GetString(i)));
 
-	if (seznamEnacb.size() > 0) res = izracunGraf(seznamEnacb, ctrlKorakMeritveX->GetValue(), ctrlVrednostMeritveX->GetValue(), &grafX, &grafY);
+	std::string spremenljivka = static_cast<std::string>(radioVelicinaX->GetStringSelection());
+
+	if (seznamEnacb.size() > 0) res = izracunGraf(seznamEnacb, spremenljivka, ctrlKorakMeritveX->GetValue(), ctrlVrednostMeritveX->GetValue(), &grafX, &grafY, &podatkiZobnika);
 	else res.clear();
 
-	dc.DrawText("Korak =", wxPoint(170, 567));
-	dc.DrawText("Obmocje =", wxPoint(813, 567));
+	dc.DrawText("Korak =", wxPoint(170, 587));
+	dc.DrawText("Obmocje =", wxPoint(813, 587));
 
 	//// Ozadje
 	wxPoint pointGraf(150, 20);
-	wxSize sizeGraf(size.x - 190, size.y - 80);
+	wxSize sizeGraf(size.x - 200, size.y - 100);
 
 	dc.SetPen(wxPen(wxColour(255, 255, 255), 1, wxPENSTYLE_SOLID));
 	dc.DrawRectangle(pointGraf, sizeGraf);
@@ -222,11 +295,11 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 	//// Vrednosti
 	dc.SetPen(wxPen(wxColour(153, 153, 153), 1, wxPENSTYLE_SOLID));
 	for (int i = 0; i < grafX.size(); i++) { // X os
-		dc.DrawText(wxString::Format("%g", grafX[i]), wxPoint(pointGraf.x + i * sizeGraf.x / 5 - 3,   pointGraf.y + sizeGraf.y + 5)); //////////////////// preureditev 'size.x' in 'size.y' z 'pointGraf' in 'sizeGraf'
+		dc.DrawText(wxString::Format("%g", round(grafX[i] * 10000) / 10000), wxPoint(pointGraf.x + i * sizeGraf.x / 5 - 3,   pointGraf.y + sizeGraf.y + 5));
 		if (i > 0) dc.DrawLine(wxPoint(pointGraf.x + i * sizeGraf.x / 5, pointGraf.y + sizeGraf.y + 5), wxPoint(pointGraf.x + i * sizeGraf.x / 5, pointGraf.y));
 	}
 	for (int i = 0; i < grafY.size(); i++) { // Y os
-		dc.DrawText(wxString::Format("%g", grafY[i]), wxPoint(pointGraf.x - 20, pointGraf.y + sizeGraf.y - i * sizeGraf.y / 5 - 7));
+		dc.DrawText(wxString::Format("%g", round(grafY[i] * 10000) / 10000), wxPoint(pointGraf.x - 36, pointGraf.y + sizeGraf.y - i * sizeGraf.y / 5 - 7));
 		if (i > 0) dc.DrawLine(wxPoint(pointGraf.x - 5, pointGraf.y + sizeGraf.y - i * sizeGraf.y / 5), wxPoint(pointGraf.x + sizeGraf.x, pointGraf.y + sizeGraf.y - i * sizeGraf.y / 5));
 	}
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID));
@@ -244,7 +317,7 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 		for (int j = 0; j < res[i].size(); j++) {
 
 			wxPoint* tocka;
-			tocka = new wxPoint(pointGraf.x + sizeGraf.x * res[0][j] / grafX[grafX.size() - 1], pointGraf.y + sizeGraf.y - sizeGraf.y * (res[i][j] - grafY[0]) / (grafY[grafY.size() - 1] - grafY[0]));
+			tocka = new wxPoint(pointGraf.x + sizeGraf.x * (res[0][j] - grafX[0]) / (grafX[grafX.size() - 1] - grafX[0]), pointGraf.y + sizeGraf.y - sizeGraf.y * (res[i][j] - grafY[0]) / (grafY[grafY.size() - 1] - grafY[0]));
 			seznamTock->Append(tocka);
 		}
 
@@ -253,7 +326,7 @@ void GrafFrame::OnPaint(wxPaintEvent& event) {
 	dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID));
 
 	//// Legenda
-	dc.DrawText(radioVelicinaX->GetString(radioVelicinaX->GetSelection()), wxPoint(size.x - 32, sizeGraf.y)); // X os
+	dc.DrawText(radioVelicinaX->GetString(radioVelicinaX->GetSelection()), wxPoint(size.x - 44, sizeGraf.y)); // X os
 	
 	dc.DrawText("Izracunaj:", wxPoint(10, 8)); // Y os
 	

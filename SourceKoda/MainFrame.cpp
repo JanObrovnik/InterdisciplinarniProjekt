@@ -206,7 +206,7 @@ void MainFrame::OnButtonGraforisClicked(wxCommandEvent& evt) {
 
 	GrafFrame* grafFrame = new GrafFrame("Simulacija hidravlicne crpalke"); // ustvarimo frame z imenom
 
-	grafFrame->SetClientSize(1000, 600); // velikost aplikacije
+	grafFrame->SetClientSize(1000, 640); // velikost aplikacije
 	grafFrame->Center();
 
 	grafFrame->Show();
