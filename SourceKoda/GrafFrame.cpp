@@ -99,6 +99,20 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 			res[i + 1].push_back(resitev);
 		}
 
+		else if (seznamEnacb[i] == "M [Nm]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
+
+			double u = j / 1000;
+
+			float p2 = 20*100000; // tlak
+			float b = zobnik->debelina / 1000;
+			float da = zobnik->premerTemenskegaKroga / 1000;
+			float dw = zobnik->premerKinematskegaKroga / 1000;
+
+			double resitev = p2 * b * (pow(da / 2, 2) - pow(dw / 2, 2) - pow(u, 2));
+
+			res[i + 1].push_back(resitev);
+		}
+
 		else for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
 			res[i + 1].push_back(0);
@@ -175,9 +189,11 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	velicineY.Add("0");
 	velicineY.Add("Qai [l/s]");
 	velicineY.Add("Qg [l/s]");
+	velicineY.Add("M [Nm]");
 	checkListBoxYOs = new wxCheckListBox(panel, wxID_ANY, wxPoint(10, 25), wxSize(92, -1), velicineY);
 	checkListBoxYOs->SetString(4, "/");
 	checkListBoxYOs->SetString(5, "/");
+	checkListBoxYOs->SetString(6, "/");
 
 	ctrlVrednostMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(878, 586), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 1000, 10, .1);
 	ctrlKorakMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(215, 586), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 10, .01, .01);
@@ -266,6 +282,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 	
 		checkListBoxYOs->SetString(4, "/");
 		checkListBoxYOs->SetString(5, "/");
+		checkListBoxYOs->SetString(6, "/");
 
 		ctrlVrednostMeritveX->Enable();
 	}
@@ -274,6 +291,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 
 		checkListBoxYOs->SetString(4, "/");
 		checkListBoxYOs->SetString(5, "/");
+		checkListBoxYOs->SetString(6, "/");
 
 		ctrlVrednostMeritveX->Enable();
 	}
@@ -296,6 +314,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 		checkListBoxYOs->SetString(2, "/");
 		checkListBoxYOs->SetString(3, "/");
 		checkListBoxYOs->SetString(4, "/");
+		checkListBoxYOs->SetString(6, "/");
 
 		ctrlVrednostMeritveX->Enable();
 	}
@@ -307,6 +326,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 		checkListBoxYOs->SetString(2, "/");
 		checkListBoxYOs->SetString(3, "/");
 		checkListBoxYOs->SetString(4, "/");
+		checkListBoxYOs->SetString(6, "/"); //////////// to se dodat - posebi funkcija za izracunat dw pa da pa to
 
 		ctrlVrednostMeritveX->Enable();
 	}
