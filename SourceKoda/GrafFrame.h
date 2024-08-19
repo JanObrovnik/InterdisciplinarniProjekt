@@ -31,7 +31,7 @@ private:
 
 struct PodatkiZobnika {
 
-	short stZob = 11;
+	float stZob = 11;
 	float modul = 4;
 	float debelina = 40; // [mm]
 	float premerKinematskegaKroga = modul * stZob; // [mm]

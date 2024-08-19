@@ -66,7 +66,7 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 			res[i + 1].push_back(j * j + 5);
 		}
 
-		else if (seznamEnacb[i] == "V(u) [l/s]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
+		else if (seznamEnacb[i] == "Qai [l/s]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
 			double u = j / 1000;
 
@@ -76,6 +76,25 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 			float n = 2; // vrtljaji
 
 			double resitev = (b * M_PI * n * (pow(da, 2) / 2 - pow(dw, 2) / 2 - 2 * pow(u, 2))) * 1000;
+
+			res[i + 1].push_back(resitev);
+		}
+
+		else if (seznamEnacb[i] == "Qg [l/s]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
+
+			float z = zobnik->stZob;
+			float m = zobnik->modul / 1000;
+			float b = zobnik->debelina / 1000;
+			float da = zobnik->premerTemenskegaKroga / 1000;
+			float dw = zobnik->premerKinematskegaKroga / 1000;
+			float alfa = zobnik->kotPhi;
+			float n = 2; // vrtljaji
+
+			if (spremenljivka == "n [1/s]") n = j;
+			else if (spremenljivka == "m [mm]") m = j / 1000;
+
+			//double resitev = (2 * b * M_PI * n * (pow(da/2, 2) - pow(dw/2, 2) * pow(m * M_PI * cos(alfa), 2) / 12)) * 1000;
+			double resitev = (2 * b * M_PI * n * pow(m, 2) * (z + pow(sin(alfa), 2))) * 1000;
 
 			res[i + 1].push_back(resitev);
 		}
@@ -154,17 +173,21 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	velicineY.Add("2x");
 	velicineY.Add("x2");
 	velicineY.Add("0");
-	velicineY.Add("V(u) [l/s]");
+	velicineY.Add("Qai [l/s]");
+	velicineY.Add("Qg [l/s]");
 	checkListBoxYOs = new wxCheckListBox(panel, wxID_ANY, wxPoint(10, 25), wxSize(92, -1), velicineY);
 	checkListBoxYOs->SetString(4, "/");
+	checkListBoxYOs->SetString(5, "/");
 
 	ctrlVrednostMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(878, 586), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 1000, 10, .1);
 	ctrlKorakMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(215, 586), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 10, .01, .01);
 	
 	wxArrayString velicineX;
-	velicineX.Add("t [s]");
+	//velicineX.Add("t [s]");
 	velicineX.Add("x [m]");
 	velicineX.Add("u [mm]");
+	velicineX.Add("n [1/s]");
+	velicineX.Add("m [mm]");
 	radioVelicinaX = new wxRadioBox(panel, wxID_ANY, "", wxPoint(460, 585), wxDefaultSize, velicineX, 1, wxRA_SPECIFY_ROWS);
 
 
@@ -242,6 +265,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 	if (radioVelicinaX->GetStringSelection() == "t [s]") {
 	
 		checkListBoxYOs->SetString(4, "/");
+		checkListBoxYOs->SetString(5, "/");
 
 		ctrlVrednostMeritveX->Enable();
 	}
@@ -249,6 +273,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 	else if (radioVelicinaX->GetStringSelection() == "x [m]") {
 
 		checkListBoxYOs->SetString(4, "/");
+		checkListBoxYOs->SetString(5, "/");
 
 		ctrlVrednostMeritveX->Enable();
 	}
@@ -259,8 +284,31 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 		checkListBoxYOs->SetString(1, "/");
 		checkListBoxYOs->SetString(2, "/");
 		checkListBoxYOs->SetString(3, "/");
+		checkListBoxYOs->SetString(5, "/");
 
 		ctrlVrednostMeritveX->Disable();
+	}
+
+	else if (radioVelicinaX->GetStringSelection() == "n [1/s]") {
+
+		checkListBoxYOs->SetString(0, "/");
+		checkListBoxYOs->SetString(1, "/");
+		checkListBoxYOs->SetString(2, "/");
+		checkListBoxYOs->SetString(3, "/");
+		checkListBoxYOs->SetString(4, "/");
+
+		ctrlVrednostMeritveX->Enable();
+	}
+
+	else if (radioVelicinaX->GetStringSelection() == "m [mm]") {
+
+		checkListBoxYOs->SetString(0, "/");
+		checkListBoxYOs->SetString(1, "/");
+		checkListBoxYOs->SetString(2, "/");
+		checkListBoxYOs->SetString(3, "/");
+		checkListBoxYOs->SetString(4, "/");
+
+		ctrlVrednostMeritveX->Enable();
 	}
 }
 
