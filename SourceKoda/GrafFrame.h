@@ -39,4 +39,9 @@ struct PodatkiZobnika {
 	float premerTemenskegaKroga = premerKinematskegaKroga + 2 * modul; // [mm]
 	float kotPhi = 20. / 180. * M_PI; // [rad]
 	float dolzinaKontakta = sqrt(pow(premerTemenskegaKroga, 2) - pow(premerKinematskegaKroga, 2) * pow(cos(kotPhi), 2)) - premerKinematskegaKroga * sin(kotPhi); // [mm]
+
+	float vrtljaji = 2; // [s-1]
+	float tlak = 20; // [bar]
+	float iztisnina = 20; // [m3/vrt]
+	float izkoristek = .9; // [/]
 };

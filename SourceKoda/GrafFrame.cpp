@@ -30,6 +30,27 @@ double minVrednost(std::vector<std::vector<double>> res) {
 }
 
 
+PodatkiZobnika izracunZobnika(PodatkiZobnika* zobnik, double modul) {
+
+	PodatkiZobnika pod = *zobnik;
+
+	
+	float m = modul;
+	short z = pod.stZob;
+	float b = pod.debelina;
+
+	float dw = m * z;
+	float df = dw - 2.5 * m;
+	float da = dw + 2 * m;
+
+	pod.premerKinematskegaKroga = dw;
+	pod.premerKorenjskegaKroga = df;
+	pod.premerTemenskegaKroga = da;
+
+	return pod;
+}
+
+
 std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnacb, std::string spremenljivka, double korak, double vrednost, std::vector<double>* grafX, std::vector<double>* grafY, PodatkiZobnika* zobnik) {
 
 	std::vector<std::vector<double>> res;
@@ -73,7 +94,7 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 			float b = zobnik->debelina / 1000;
 			float da = zobnik->premerTemenskegaKroga / 1000;
 			float dw = zobnik->premerKinematskegaKroga / 1000;
-			float n = 2; // vrtljaji
+			float n = zobnik->vrtljaji;
 
 			double resitev = (b * M_PI * n * (pow(da, 2) / 2 - pow(dw, 2) / 2 - 2 * pow(u, 2))) * 1000;
 
@@ -82,43 +103,67 @@ std::vector<std::vector<double>> izracunGraf(std::vector<std::string> seznamEnac
 
 		else if (seznamEnacb[i] == "Qg [l/s]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
-			float z = zobnik->stZob;
-			float m = zobnik->modul / 1000;
-			float b = zobnik->debelina / 1000;
-			float da = zobnik->premerTemenskegaKroga / 1000;
-			float dw = zobnik->premerKinematskegaKroga / 1000;
-			float alfa = zobnik->kotPhi;
-			float n = 2; // vrtljaji
+			PodatkiZobnika pod = *zobnik;
+
+			float m = pod.modul / 1000;
+			float n = pod.vrtljaji;
 
 			if (spremenljivka == "n [1/s]") n = j;
-			else if (spremenljivka == "m [mm]") m = j / 1000;
+			else if (spremenljivka == "m [mm]") {
+				m = j / 1000;
+				pod = izracunZobnika(zobnik, m * 1000);
+			}
 
-			//double resitev = (2 * b * M_PI * n * (pow(da/2, 2) - pow(dw/2, 2) * pow(m * M_PI * cos(alfa), 2) / 12)) * 1000;
-			double resitev = (2 * b * M_PI * n * pow(m, 2) * (z + pow(sin(alfa), 2))) * 1000;
+			float z = pod.stZob;
+			float b = pod.debelina / 1000;
+			float da = pod.premerTemenskegaKroga / 1000;
+			float dw = pod.premerKinematskegaKroga / 1000;
+			float alfa = pod.kotPhi;
+
+			double resitev = (2 * b * M_PI * n * (pow(da/2, 2) - pow(dw/2, 2) * pow(m * M_PI * cos(alfa), 2) / 12)) * 1000;
+			//double resitev = (2 * b * M_PI * n * pow(m, 2) * (z + pow(sin(alfa), 2))) * 1000;
 
 			res[i + 1].push_back(resitev);
 		}
 
 		else if (seznamEnacb[i] == "M [Nm]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
-			double u = j / 1000;
+			if (spremenljivka == "u [mm]") {
+				
+				double u = j / 1000;
 
-			float p2 = 20 * 100000; // tlak
-			float b = zobnik->debelina / 1000;
-			float da = zobnik->premerTemenskegaKroga / 1000;
-			float dw = zobnik->premerKinematskegaKroga / 1000;
+				float p2 = zobnik->tlak * 100000;
+				float b = zobnik->debelina / 1000;
+				float da = zobnik->premerTemenskegaKroga / 1000;
+				float dw = zobnik->premerKinematskegaKroga / 1000;
 
-			double resitev = p2 * b * (pow(da / 2, 2) - pow(dw / 2, 2) - pow(u, 2));
+				double resitev = p2 * b * (pow(da / 2, 2) - pow(dw / 2, 2) - pow(u, 2));
 
-			res[i + 1].push_back(resitev);
+				res[i + 1].push_back(resitev);
+			}
+			else if (spremenljivka == "m [mm]") {
+
+				double m = j;
+
+				PodatkiZobnika pod = izracunZobnika(zobnik, m);
+
+				float p2 = pod.tlak * 100000;
+				float b = pod.debelina / 1000;
+				float da = pod.premerTemenskegaKroga / 1000;
+				float dw = pod.premerKinematskegaKroga / 1000;
+
+				double resitev = p2 * b * (pow(da / 2, 2) - pow(dw / 2, 2));
+
+				res[i + 1].push_back(resitev);
+			}
 		}
 
 		else if (seznamEnacb[i] == "Qc [l/s]") for (double j = res[0][0]; j <= res[0][res[0].size() - 1]; j += korak) {
 
 			double n = j;
 
-			float q = 20; // iztisnitev
-			float izk = .9;
+			float q = zobnik->iztisnina;
+			float izk = zobnik->izkoristek;
 
 			double resitev = q * n * izk / 1000;
 
@@ -195,19 +240,17 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	wxButton* shraniData = new wxButton(panel, wxID_ANY, "Shrani\nmeritve", wxPoint(10, 535), wxSize(92, 92));
 
 	velicineY.Clear();
-	velicineY.Add("x");
-	velicineY.Add("2x");
-	velicineY.Add("x2");
-	velicineY.Add("0");
+	//velicineY.Add("x");
+	//velicineY.Add("2x");
+	//velicineY.Add("x2");
+	//velicineY.Add("0");
 	velicineY.Add("Qai [l/s]");
 	velicineY.Add("Qg [l/s]");
 	velicineY.Add("M [Nm]");
 	velicineY.Add("Qc [l/s]");
 	checkListBoxYOs = new wxCheckListBox(panel, wxID_ANY, wxPoint(10, 25), wxSize(92, -1), velicineY);
-	checkListBoxYOs->SetString(4, "/");
-	checkListBoxYOs->SetString(5, "/");
-	checkListBoxYOs->SetString(6, "/");
-	checkListBoxYOs->SetString(7, "/");
+	checkListBoxYOs->SetString(1, "/");
+	checkListBoxYOs->SetString(3, "/");
 
 
 	ctrlVrednostMeritveX = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(878, 586), wxDefaultSize, wxSP_ARROW_KEYS | wxSP_WRAP, 0, 1000, 10, .1);
@@ -215,7 +258,7 @@ GrafFrame::GrafFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 
 	wxArrayString velicineX;
 	//velicineX.Add("t [s]");
-	velicineX.Add("x [m]");
+	//velicineX.Add("x [m]");
 	velicineX.Add("u [mm]");
 	velicineX.Add("n [1/s]");
 	velicineX.Add("m [mm]");
@@ -315,12 +358,8 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 
 	else if (radioVelicinaX->GetStringSelection() == "u [mm]") {
 
-		checkListBoxYOs->SetString(0, "/");
 		checkListBoxYOs->SetString(1, "/");
-		checkListBoxYOs->SetString(2, "/");
 		checkListBoxYOs->SetString(3, "/");
-		checkListBoxYOs->SetString(5, "/");
-		checkListBoxYOs->SetString(7, "/");
 
 		ctrlVrednostMeritveX->Disable();
 	}
@@ -328,11 +367,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 	else if (radioVelicinaX->GetStringSelection() == "n [1/s]") {
 
 		checkListBoxYOs->SetString(0, "/");
-		checkListBoxYOs->SetString(1, "/");
 		checkListBoxYOs->SetString(2, "/");
-		checkListBoxYOs->SetString(3, "/");
-		checkListBoxYOs->SetString(4, "/");
-		checkListBoxYOs->SetString(6, "/");
 
 		ctrlVrednostMeritveX->Enable();
 	}
@@ -340,12 +375,7 @@ void GrafFrame::OnRadioVelicinaXChange(wxCommandEvent& evt) {
 	else if (radioVelicinaX->GetStringSelection() == "m [mm]") {
 
 		checkListBoxYOs->SetString(0, "/");
-		checkListBoxYOs->SetString(1, "/");
-		checkListBoxYOs->SetString(2, "/");
-		checkListBoxYOs->SetString(3, "/");
-		checkListBoxYOs->SetString(4, "/");
-		checkListBoxYOs->SetString(6, "/"); //////////// to se dodat - posebi funkcija za izracunat dw pa da pa to
-		checkListBoxYOs->SetString(7, "/");
+		checkListBoxYOs->SetString(3, "/"); //////////// to se dodat - posebi funkcija za izracunat dw pa da pa to
 
 		ctrlVrednostMeritveX->Enable();
 	}
@@ -458,7 +488,9 @@ wxSpinCtrlDouble* spinCtrlModul;
 wxSpinCtrlDouble* spinCtrlDebelina;
 wxSpinCtrlDouble* spinCtrlKotPhi;
 
-NastavitveZobnika::NastavitveZobnika() : wxFrame(nullptr, wxID_ANY, wxString::Format("Nastavitve priseska"), wxPoint(0, 0), wxSize(250, 300)) {
+wxSpinCtrlDouble* spinCtrlTlak;
+
+NastavitveZobnika::NastavitveZobnika() : wxFrame(nullptr, wxID_ANY, wxString::Format("Nastavitve priseska"), wxPoint(0, 0), wxSize(500, 300)) {
 
 	wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 
@@ -469,6 +501,8 @@ NastavitveZobnika::NastavitveZobnika() : wxFrame(nullptr, wxID_ANY, wxString::Fo
 	spinCtrlModul = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(160, 40), wxSize(70, -1), wxSP_WRAP, 1, 10, podatkiZobnika.modul, .5);
 	spinCtrlDebelina = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(160, 70), wxSize(70, -1), wxSP_WRAP, 0, 100, podatkiZobnika.debelina, .1);
 	spinCtrlKotPhi = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(160, 100), wxSize(70, -1), wxSP_WRAP, 14.5, 20, podatkiZobnika.kotPhi / M_PI * 180, .1);
+
+	spinCtrlTlak = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxPoint(410, 10), wxDefaultSize, wxSP_WRAP, 1, 60, podatkiZobnika.tlak, .1);
 
 
 	apply->Bind(wxEVT_BUTTON, &NastavitveZobnika::OnButtonUporabiClicked, this);
@@ -493,6 +527,8 @@ void NastavitveZobnika::OnButtonUporabiClicked(wxCommandEvent& evt) {
 	podatkiZobnika.dolzinaKontakta =
 		sqrt(pow(podatkiZobnika.premerTemenskegaKroga, 2) - pow(podatkiZobnika.premerKinematskegaKroga, 2) * pow(cos(podatkiZobnika.kotPhi), 2)) - podatkiZobnika.premerKinematskegaKroga * sin(podatkiZobnika.kotPhi);
 
+	podatkiZobnika.tlak = spinCtrlTlak->GetValue();
+
 	Refresh();
 }
 
@@ -505,6 +541,7 @@ void NastavitveZobnika::OnButtonZapriClicked(wxCommandEvent& evt) {
 void NastavitveZobnika::OnPaint(wxPaintEvent& event) {
 
 	wxPaintDC dc(this);
+	wxSize size = this->GetSize();
 
 	dc.DrawText("Stevilo zob: z [/]", wxPoint(10, 12));
 	dc.DrawText("Modul zobnika: m [mm]", wxPoint(10, 42));
@@ -515,4 +552,8 @@ void NastavitveZobnika::OnPaint(wxPaintEvent& event) {
 	dc.DrawText(wxString::Format("Premer korenjskega kroga: da = %g mm", podatkiZobnika.premerKorenjskegaKroga), wxPoint(10, 165));
 	dc.DrawText(wxString::Format("Premer temenskega kroga: df = %g mm", podatkiZobnika.premerTemenskegaKroga), wxPoint(10, 180));
 	dc.DrawText(wxString::Format("Dolzina kontakta: l = %g mm", podatkiZobnika.dolzinaKontakta), wxPoint(10, 195));
+
+	dc.DrawLine(wxPoint(size.x / 2, 0), wxPoint(size.x / 2, size.y));
+
+	dc.DrawText("Delovni tlak: p [bar]", wxPoint(260, 12));
 }

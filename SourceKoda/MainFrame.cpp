@@ -28,7 +28,7 @@ static void izracunZobnika(PodatkovnaBazaZobnika* zobnik) {
 
 
 //- IZRACUN MEHANIZMA
-static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vector<wxSlider*> seznamSil) {
+static void izracun(StanjeZobnika* stanje, PodatkovnaBazaZobnika* zobnik, std::string konstParameter, std::vector<wxSlider*> seznamSil) {
 
 	double dt = 1. / 100; // korak
 
@@ -37,16 +37,36 @@ static void izracun(StanjeZobnika* stanje, std::string konstParameter, std::vect
 
 	if (konstParameter == "Konst. moc") {
 		vrtljaji = 0;
-		vrtljaji -= stanje->delovniTlak;
-		vrtljaji += stanje->osnovniTlak;
-		vrtljaji += moc;
+
+		if (moc > 0) {
+			double p2 = (stanje->delovniTlak - stanje->osnovniTlak) * 100000;
+			double b = zobnik->debelina / 1000;
+			double da = zobnik->premerTemenskegaKroga / 1000;
+			double dw = zobnik->premerKinematskegaKroga / 1000;
+			double izk = .9;
+
+			double M = p2 * b * (pow(da / 2, 2) - pow(dw / 2, 2));
+
+			vrtljaji = moc * izk / M;
+			if (vrtljaji > 100) vrtljaji = 100;
+			if (vrtljaji < -100) vrtljaji = -100;
+		}
+
 		stanje->vrtljaji = vrtljaji;
 	}
 	else if (konstParameter == "Konst. vrtljaji") {
 		moc = 0;
-		moc += vrtljaji;
-		moc += stanje->delovniTlak;
-		moc -= stanje->osnovniTlak;
+
+		double p2 = (stanje->delovniTlak - stanje->osnovniTlak) * 100000;
+		double b = zobnik->debelina / 1000;
+		double da = zobnik->premerTemenskegaKroga / 1000;
+		double dw = zobnik->premerKinematskegaKroga / 1000;
+		double izk = .9;
+
+		double M = p2 * b * (pow(da / 2, 2) - pow(dw / 2, 2));
+
+		moc = vrtljaji * M / izk;
+
 		stanje->moc = moc;
 	}
 
@@ -110,7 +130,7 @@ MainFrame::MainFrame(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) 
 	sliderHitrosti = new wxSlider(panel, wxID_ANY, 50, 0, 50, wxPoint(250, 0), wxSize(600, -1)); // Definiramo slider
 	sliderDelovniTlak = new wxSlider(panel, wxID_ANY, stanje.delovniTlak, 0, 100, wxPoint(850, 270), wxSize(140, -1));
 	sliderOsnovniTlak = new wxSlider(panel, wxID_ANY, stanje.osnovniTlak, 0, 100, wxPoint(850, 320), wxSize(140, -1));
-	sliderMoc = new wxSlider(panel, wxID_ANY, stanje.moc, 0, 100, wxPoint(850, 370), wxSize(140, -1));
+	sliderMoc = new wxSlider(panel, wxID_ANY, stanje.moc, 0, 1000, wxPoint(850, 370), wxSize(140, -1));
 	sliderVrtljaji = new wxSlider(panel, wxID_ANY, stanje.vrtljaji, 0, 100, wxPoint(850, 420), wxSize(140, -1));
 	sliderVrtljaji->Disable();
 
@@ -170,7 +190,7 @@ void MainFrame::OnButtonSimClicked(wxCommandEvent& evt) { // Funkcija ob pritisk
 		seznamSil.push_back(sliderMoc);
 		seznamSil.push_back(sliderVrtljaji);
 
-		izracun(&stanje, static_cast<std::string>(konstParameter->GetStringSelection()), seznamSil); // Izracun
+		izracun(&stanje, &zobnik, static_cast<std::string>(konstParameter->GetStringSelection()), seznamSil); // Izracun
 	}
 }
 
@@ -303,8 +323,8 @@ void MainFrame::OnPaint(wxPaintEvent& event) { // Funkcija, ki rise
 
 	dc.DrawText(wxString::Format("Delovni tlak %g bar", stanje.delovniTlak), wxPoint(x_okno + sirina + 5, 255));
 	dc.DrawText(wxString::Format("Osnovni tlak %g bar", stanje.osnovniTlak), wxPoint(x_okno + sirina + 5, 305));
-	dc.DrawText(wxString::Format("Moc crpalke %g kW", stanje.moc), wxPoint(x_okno + sirina + 5, 355));
-	dc.DrawText(wxString::Format("Vrljaji crpalke %g min^-1", stanje.vrtljaji), wxPoint(x_okno + sirina + 5, 405));
+	dc.DrawText(wxString::Format("Moc crpalke %g W", stanje.moc), wxPoint(x_okno + sirina + 5, 355));
+	dc.DrawText(wxString::Format("Vrljaji crpalke %g min^-1", round(stanje.vrtljaji)), wxPoint(x_okno + sirina + 5, 405));
 
 
 	// Admin Logs
